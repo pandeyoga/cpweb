@@ -17,6 +17,14 @@ const isPreviewMode = () => {
   catch { return false; }
 };
 
+// Gulir iframe pratinjau ke section yang sedang diedit (announcement = paling atas).
+const focusSection = (key) => {
+  if (key === 'announcement' || key === 'header') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  const el = document.querySelector(`[data-cms-key="${key}"]`);
+  const target = el && el.firstElementChild;
+  if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
+
 export const ContentProvider = ({ children }) => {
   const [content, setContent] = useState({});
   const [draftOverride, setDraftOverride] = useState(null);
@@ -43,6 +51,8 @@ export const ContentProvider = ({ children }) => {
         setDraftOverride(data.content);
       } else if (data.type === 'CMS_DRAFT_CLEAR') {
         setDraftOverride(null);
+      } else if (data.type === 'CMS_FOCUS' && typeof data.key === 'string') {
+        focusSection(data.key);
       }
     };
     window.addEventListener('message', onMsg);

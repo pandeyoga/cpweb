@@ -15,12 +15,13 @@ const ANNOUNCE_DEFAULT = {
   ],
 };
 
-export const AnnouncementBar = () => {
-  const c = useContent('announcement', ANNOUNCE_DEFAULT);
+export const AnnouncementBar = () => <AnnouncementView data={useContent('announcement', ANNOUNCE_DEFAULT)} />;
+
+export const AnnouncementView = ({ data: c, testId = 'announcement-bar' }) => {
   const items = (Array.isArray(c.items) && c.items.length ? c.items : ANNOUNCE_DEFAULT.items);
   return (
     <div
-      data-testid="announcement-bar"
+      data-testid={testId}
       className="bg-[color:var(--cp-ink)] text-[color:var(--cp-paper)] cp-mono uppercase text-[10px] sm:text-[11px] tracking-[0.2em]"
       style={{ height: 'var(--announcement-h)' }}
     >
@@ -62,12 +63,15 @@ const TrustItem = ({ item, i }) => {
     : <div className={cls} data-testid={`trust-item-${i}`}>{body}</div>;
 };
 
-export const TrustStrip = () => {
-  const c = useContent('trust', TRUST_DEFAULT);
+export const TrustStrip = () => <TrustStripView data={useContent('trust', TRUST_DEFAULT)} />;
+
+export const TrustStripView = ({ data: c, testId = 'trust-strip', wide = false }) => {
   const items = (Array.isArray(c.items) && c.items.length ? c.items : TRUST_DEFAULT.items);
-  const cols = { 1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3' }[items.length] || 'sm:grid-cols-2 lg:grid-cols-4';
+  const cols = wide
+    ? ({ 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' }[items.length] || 'grid-cols-4')
+    : ({ 1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3' }[items.length] || 'sm:grid-cols-2 lg:grid-cols-4');
   return (
-    <div className={`grid grid-cols-1 ${cols} border-y border-black/10`} data-testid="trust-strip">
+    <div className={`grid ${wide ? '' : 'grid-cols-1'} ${cols} border-y border-black/10`} data-testid={testId}>
       {items.map((it, i) => <TrustItem key={i} item={it} i={i} />)}
     </div>
   );

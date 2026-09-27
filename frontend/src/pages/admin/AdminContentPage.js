@@ -14,6 +14,7 @@ import { getContentSchema, getContentAdmin, updateContentSection,
 import { CmsHistoryDrawer } from '../../components/admin/CmsHistoryDrawer';
 import { PageHeader } from '../../components/admin/adminUi';
 import { ContentForm } from '../../components/admin/ContentForm';
+import { CmsInlinePreview } from '../../components/admin/CmsInlinePreview';
 import { growthTestIds as G } from '../../constants/testIds/growth';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
@@ -107,6 +108,15 @@ export default function AdminContentPage() {
   }, [draft, active, content, iframeReady]);
 
   useEffect(() => { broadcastDraft(); }, [broadcastDraft]);
+
+  // Gulir iframe ke section aktif (mis. Trust Strip / Marquee) saat dipilih atau iframe siap.
+  useEffect(() => {
+    if (!iframeRef.current || !iframeReady || !active) return;
+    const t = setTimeout(() => {
+      try { iframeRef.current.contentWindow.postMessage({ type: 'CMS_FOCUS', key: active }, '*'); } catch (e) { /* noop */ }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [active, iframeReady]);
 
   // Terima sinyal READY dari iframe.
   useEffect(() => {
@@ -272,7 +282,7 @@ export default function AdminContentPage() {
           </div>
 
           {/* TENGAH — Editor */}
-          <Card className="border-border/70 h-fit sticky top-4">
+          <Card className="border-border/70 h-fit sticky top-4 min-w-0">
             <CardContent className="p-5">
               {activeSection ? (
                 <>
@@ -313,6 +323,7 @@ export default function AdminContentPage() {
                     </div>
                   </div>
                   <div className="max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
+                    <CmsInlinePreview sectionKey={activeSection.key} draft={draft} dirty={dirty} />
                     <ContentForm fields={activeSection.fields} value={draft} onChange={setDraft} />
                   </div>
                 </>
@@ -324,7 +335,7 @@ export default function AdminContentPage() {
 
           {/* KANAN — Live Preview */}
           {showPreview && (
-            <div className="space-y-3 sticky top-4 h-fit">
+            <div className="space-y-3 sticky top-4 h-fit min-w-0">
               <Card className="border-border/70">
                 <div className="p-3 border-b border-border/60 flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-1">

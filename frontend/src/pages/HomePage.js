@@ -4,7 +4,7 @@ import { useContent } from '../store/ContentContext';
 import { fetchReviews } from '../services/catalog';
 import Seo from '../components/shared/Seo';
 import { HeroSection } from '../components/home/HeroSection';
-import { MarqueeStrip } from '../components/shared/MarqueeStrip';
+import { MarqueeWords, STRIP_ITEMS } from '../components/home/MarqueeWords';
 import { ShopByOccasion } from '../components/home/FacetSection';
 import { DiscoverySection } from '../components/home/DiscoverySection';
 import { BestSellersSection } from '../components/home/BestSellersSection';
@@ -22,21 +22,6 @@ const DEFAULT_ORDER = [
   'hero', 'marquee_words', 'story_strip', 'occasion_section', 'character_section',
   'media_editorial', 'trust', 'featured', 'big_word', 'new_arrivals', 'gallery', 'video', 'testimonials', 'faq',
 ].map((key) => ({ key, visible: true }));
-
-const STRIP_ITEMS = [
-  'ELEGAN',
-  'BERKARAKTER',
-  'ORIGINAL',
-  'MEWAH',
-  'MEMBEKAS',
-  'SELAMANYA',
-];
-
-const MARQUEE_BG = {
-  light: 'bg-[color:var(--cp-paper-fog)]',
-  dark: '',
-  brass: 'bg-[color:var(--cp-champagne)]',
-};
 
 export default function HomePage() {
   const { products, occasions, loading } = useCatalog();
@@ -70,16 +55,7 @@ export default function HomePage() {
   // Peta section -> elemen; urutan & visibilitas dari CMS `home_layout`.
   const SECTIONS = {
     hero: <HeroSection />,
-    marquee_words: (
-      <MarqueeStrip
-        items={marquee.items}
-        speed={marquee.speed || 'default'}
-        dot={marquee.separator || '•'}
-        dotImage={marquee.separator_image}
-        dark={marquee.style === 'dark'}
-        className={`border-y border-black/10 ${MARQUEE_BG[marquee.style] || MARQUEE_BG.light}`}
-      />
-    ),
+    marquee_words: <MarqueeWords data={marquee} />,
     story_strip: <StoryStrip />,
     occasion_section: <ShopByOccasion items={occasions} loading={loading} />,
     // Key lama `character_section` dipertahankan (layout CMS tersimpan tetap valid) → kini Discovery.
@@ -120,7 +96,7 @@ export default function HomePage() {
           url: typeof window !== 'undefined' ? window.location.origin : '',
         }}
       />
-      {order.map((key) => <React.Fragment key={key}>{SECTIONS[key]}</React.Fragment>)}
+      {order.map((key) => <div key={key} data-cms-key={key} className="contents">{SECTIONS[key]}</div>)}
     </div>
   );
 }
