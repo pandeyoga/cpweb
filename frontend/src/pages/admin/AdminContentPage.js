@@ -34,8 +34,8 @@ const SECTION_HINT = {
 
 const DEVICES = [
   { id: 'desktop', label: 'Desktop', icon: Monitor, width: '100%', maxW: '1440px' },
-  { id: 'tablet', label: 'Tablet', icon: Tablet, width: '820px', maxW: '820px' },
-  { id: 'mobile', label: 'Mobile', icon: Smartphone, width: '390px', maxW: '390px' },
+  { id: 'tablet', label: 'Tablet', icon: Tablet, width: '820px', maxW: '100%' },
+  { id: 'mobile', label: 'Mobile', icon: Smartphone, width: '390px', maxW: '100%' },
 ];
 
 const QUICK_ROUTES = [
@@ -352,7 +352,7 @@ export default function AdminContentPage() {
                           title={r.label}
                         >
                           <Icon className="h-3.5 w-3.5" />
-                          <span className="hidden xl:inline">{r.label}</span>
+                          <span className="hidden 2xl:inline">{r.label}</span>
                         </button>
                       );
                     })}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { MarqueeStrip } from '../shared/MarqueeStrip';
 
-export const STRIP_ITEMS = ['ELEGAN', 'BERKARAKTER', 'ORIGINAL', 'MEWAH', 'MEMBEKAS', 'SELAMANYA'];
+export const STRIP_ITEMS = ['ELEGAN', 'BERKARAKTER', 'REFILL', 'SEJAK 1970', 'MEMBEKAS', 'BANDUNG'];
 
 const MARQUEE_BG = {
   light: 'bg-[color:var(--cp-paper-fog)]',
@@ -17,6 +17,6 @@ export const MarqueeWords = ({ data }) => (
     dot={data.separator || '•'}
     dotImage={data.separator_image}
     dark={data.style === 'dark'}
-    className={`border-y border-black/10 ${MARQUEE_BG[data.style] || MARQUEE_BG.light}`}
+    className={`border-y border-black/10 ${data.style in MARQUEE_BG ? MARQUEE_BG[data.style] : MARQUEE_BG.light}`}
   />
 );

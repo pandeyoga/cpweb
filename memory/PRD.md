@@ -200,3 +200,4 @@ block `collector-parfum`, Certbot webroot), dokumentasi `DEPLOYMENT_VPS.md`.
 - Testing agent iteration_58: CMS Trust Strip / Marquee / Announcement diuji LEWAT UI admin (edit → Publish → beranda berubah) + 7/7 pytest; konten dikembalikan ke default.
 - FIX: GET /api/reviews 500 (services.catalog.list_reviews hilang) → ditambahkan, hanya ulasan `published`.
 - Backlog tetap: key Midtrans Sandbox, SMTP fastcloud.id, DNS domain (MOCK saat ini).
+- 2026-09-27 FITUR: Pratinjau langsung di editor CMS (`components/admin/CmsInlinePreview.js`) untuk Trust Strip, Marquee, Announcement — merender komponen asli (TrustStripView/MarqueeWords/AnnouncementView) dari draft sebelum Publish; iframe preview auto-gulir ke section aktif (postMessage CMS_FOCUS, wrapper `data-cms-key` di HomePage). Testing iteration_59: 100%. Fallback marquee disamakan dgn registry; fix kelas bg ganda gaya gelap.

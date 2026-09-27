@@ -1,0 +1,40 @@
+{
+  "summary": "Iter59 verified the NEW CMS inline live-preview feature (CmsInlinePreview) at /admin/konten via UI (Playwright, admin login through data-testid form). All acceptance criteria met: (1) Selecting cms-section-trust shows [data-testid=cms-inline-preview] with cms-inline-preview-trust rendering the real TrustStripView with 3 default items and status 'Sesuai versi tayang'. (2) Editing item title (via input[data-testid=cms-field-title].first -> 'UI_INLINE_TRUST_A'), changing icon select to 'flame', and clicking cms-rep-add-items to reach 4 items IMMEDIATELY reflected in the inline preview WITHOUT publishing; status flipped to 'Draft — belum dipublish'; cms-inline-preview-trust class became 'grid grid-cols-4 border-y border-black/10' (4 columns confirmed). Public homepage (opened in second tab) trust-strip did NOT contain 'UI_INLINE_TRUST_A' before publish. (3) cms-section-marquee_words shows cms-inline-preview-marquee; editing cms-list-items-0 -> 'UI_MARQ_INLINE' updated preview live; speed=fast added 'fast' class to .cp-marquee-track; separator '★' visible; style=dark applied. (4) cms-section-announcement shows cms-inline-preview-announcement; item edit + speed=slow verified with .cp-marquee-track containing 'slow'. (5) hero, faq, about, footer sections do NOT render [data-testid=cms-inline-preview]. (6) Publish flow: after Publish button, homepage trust-strip contained 'UI_PUBLISH_TRUST' and status returned to 'Sesuai versi tayang'. (7) cms-discard restored preview to baseline (items back to 3, title 'Sejak 1970'). (8) Regression: announcement-bar, marquee-strip, trust-strip all visible on public homepage. (9) No horizontal overflow at 1920 viewport (scrollWidth-clientWidth=0); at 1280 there is a minor 35px overflow — non-blocking design issue. (10) Cleanup: POST /api/admin/content/{trust,marquee_words,announcement}/revert to_default=true via in-page fetch (with Authorization: Bearer <cp:token:v1>) returned 200 for all 3; final GET /api/content confirms defaults (trust[0].title='Sejak 1970', marquee_words.items[0]='ELEGAN', announcement.items[0]='Refill Perfume Distributor Since 1970').",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/admin/content/{key}/revert", "issue": "External HTTP call using urllib with 'Authorization: Bearer <token>' (Python-side) returned 403; same call executed via page.evaluate/fetch in browser context (with X-Admin-Token header set by frontend interceptor + Bearer) returned 200. Auth likely requires X-Admin-Token header (not just Bearer). Minor DX issue for API testing outside the SPA — not a bug in the feature."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdminContentPage @ 1280px viewport", "issues": ["~35px horizontal overflow of document.documentElement (scrollWidth-clientWidth=35). At 1920px overflow is 0. Likely due to the 3-column grid lg:grid-cols-[260px_1fr_1fr] + iframe device widths (820px tablet) inside the right column not fitting cleanly at 1280. Non-blocking; consider clamping preview column min-width or hiding on <1440."]},
+      {"screen": "Marquee dark style rendering (MarqueeWords.js)", "issues": ["Bug: MARQUEE_BG.dark = '' is falsy in JS, so `MARQUEE_BG[data.style] || MARQUEE_BG.light` falls back to light ('bg-[color:var(--cp-paper-fog)]') even when style='dark'. Observed inner class: 'cp-marquee ... bg-[color:var(--cp-ink)] ... bg-[color:var(--cp-paper-fog)]' — two competing bg classes on same element. Visual dark still applies via MarqueeStrip dark prop, but this is unintentional cascade. Fix: guard with a truthy check, e.g. `data.style in MARQUEE_BG ? MARQUEE_BG[data.style] : MARQUEE_BG.light`."]},
+      {"screen": "TRUST_DEFAULT/ANNOUNCE_DEFAULT (AnnouncementBar.js) vs registry", "issues": ["MarqueeWords fallback STRIP_ITEMS ('ORIGINAL', 'MEWAH', 'SELAMANYA') does not match backend registry default ('REFILL', 'SEJAK 1970', 'BANDUNG'). Users may see a brief mismatch during hydration. Non-blocking, same recommendation as iter57/58."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter57_trust_marquee_announcement.py"
+  ],
+  "action_items": [
+    "(optional) Fix MarqueeWords.js MARQUEE_BG.dark fallback so dark style doesn't also apply paper-fog bg class.",
+    "(optional) Reduce horizontal overflow at 1280 viewport on /admin/konten (grid + iframe device widths).",
+    "(carry-over from iter58) services.catalog.list_reviews AttributeError still visible in backend logs when browsing storefront/product pages (out of scope for CMS preview)."
+  ],
+  "critical_code_review_comments": [
+    "CmsInlinePreview correctly binds Trust/Marquee/Announcement renderers by sectionKey and hides itself for non-matching sections — verified.",
+    "AdminContentPage useEffect broadcastDraft (postMessage CMS_DRAFT) + useEffect focusSection (postMessage CMS_FOCUS) fire on section change + iframeReady — iframe status indicator shows 'Menampilkan draft' when dirty and 'Sinkron' after Publish.",
+    "Publish flow correctly resets iframeReady + iframeKey and returns inline preview status to 'Sesuai versi tayang' after the API roundtrip.",
+    "Scalar Input/Select/Textarea places data-testid directly on the input element (not wrapper); testing selectors must use element[data-testid=...] not ancestor querying. Consider unique-per-row testids (cms-field-{field}-{i}-{sub}) — same suggestion as iter58."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only round; ad-hoc /revert via fetch: 3/3 200)", "frontend": "100% (all inline-preview + publish + regression checks passed)"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026",
+  "seed_data_creation": "Temporary Publish of trust.items[0].title='UI_PUBLISH_TRUST' during test; reverted to defaults via POST /api/admin/content/{trust,marquee_words,announcement}/revert to_default=true. Final /api/content confirms registry defaults.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "CMS inline preview testids: cms-inline-preview (wrapper), cms-inline-preview-status, cms-inline-preview-trust|marquee|announcement. Only appears for section keys trust, marquee_words, announcement. Editing selectors: input[data-testid=cms-field-title].first (multiple rows share testid — use .first/.nth). cms-list-{field}-{i} for list items. cms-rep-add-items to append trust rows. cms-discard resets draft, Publish button (get_by_role button Publish) commits. When making auth-required POSTs to /api/admin/*, execute via page.evaluate(fetch(...)) so the SPA's X-Admin-Token/Bearer interceptor is applied; raw urllib with only 'Authorization: Bearer <cp:token:v1>' returned 403.",
+  "rca of the issue": "N/A — feature works as specified. Reported issues are pre-existing minor design (dark marquee cascade, 1280 overflow, storefront fallback vs registry) and out-of-scope catalog reviews 500 from iter58."
+}
