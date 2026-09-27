@@ -1,0 +1,39 @@
+{
+  "summary": "Iter60 verified the date_night -> day_night refactor + discovery_section brand_limit/brand_sort CMS additions. Backend: 15/15 new tests pass (tests/test_iter60_day_night_brand.py) covering: (1) all products expose day_night in {'','day','night','both'} and no product carries legacy 'date_night' key; (2) GET /api/products?day_night=day returns only day/both, ?day_night=night returns only night/both, ?day_night=day,night returns day/night/both; (3) legacy ?date_night=1 AND ?occasion=date-night both map to day_night='both'; (4) garbage ?day_night=foobar,%20,;,42 -> 200 (no 5xx); (5) X-Total-Count header correct; (6) admin PUT /api/admin/products/{id} accepts '', 'day', 'night', 'both' and persists (GET roundtrip), invalid 'midnight' -> 422; (7) CSV export /api/admin/products/io/export?format=csv has column 'day_night' (labels in {'', Day, Night, Day/Night}) and does NOT include legacy 'date_night' column; (8) GET /api/content .discovery_section defaults brand_limit='12', brand_sort='count'; PUT brand_limit=1, brand_sort=name persists and POST /api/admin/content/discovery_section/revert {to_default:true} restores defaults; (9) /api/brands returns list with name+count; (10) /api/reviews 200 (regression). Also re-ran existing suites: test_catalog_v2.py (7 pass, 1 skip), test_iter55_discovery.py (7 pass), test_search_cms_e18.py (17 pass) — total 45 passing tests. Frontend: /shop MOMEN section has [data-testid=shop-filter-day] & [data-testid=shop-filter-night] with aria-pressed; clicking Night sets URL ?day_night=night, adding Day yields ?day_night=night,day; unclicking both removes the param; visiting /shop?date_night=1 activates BOTH buttons (aria-pressed=true) as spec'd. Admin /admin/produk/<id>: [data-testid=admin-product-day-night] select has exactly the 4 options ['— Tidak ada —','Day','Night','Day/Night']; setting Night and clicking Simpan persisted (verified via GET /api/admin/products/{id} -> day_night='night'). Admin /admin/konten section [data-testid=cms-section-discovery_section] shows brand_limit input (default '12') and brand_sort select (default 'count'). No new console errors. Preview state cleaned up: discovery_section reverted to defaults, blancnerolibloom day_night restored to 'both'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/admin/products/{id} (PUT)", "issue": "Requires full product body (name, category, variants, options) even for a single-field edit. Testing agents must GET-merge-PUT. Not a bug per se; docs/behaviour note."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Homepage discovery brand tab", "issues": ["Preview DB contains only 1 brand ('Collector'), so the brand_limit limiting behaviour cannot be visually confirmed against a large list; backend PUT/GET/revert already verified via API test. Recommend seeding >12 brands for full UI verification."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter60_day_night_brand.py",
+    "/app/test_reports/pytest/iter60_final.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/startup.py migrate_day_night is idempotent and correctly (a) maps legacy date_night=true -> day_night='both', (b) fills missing day_night='' , (c) $unset date_night on any legacy doc. Good.",
+    "services/catalog.build_product_filter: legacy fallback maps ?date_night=1 or ?occasion=date-night to moments=['both'] only, and then expands to include 'both' (sorted set union). Correct per spec.",
+    "core_utils.normalize_day_night tolerates Indonesian labels (siang/malam/keduanya) plus 'Day/Night' variations — good for CSV/XLSX import.",
+    "content_registry.discovery_section adds fields brand_limit (text) and brand_sort (select count/manual/name). Note: brand_limit is stored as string ('12') not int; frontend must parse. Consider adding a numeric validator or converting to Int in the schema for consistency.",
+    "AdminProductEditorPage.js: after Simpan the page navigates back to /admin/produk (line 260), which makes UI persistence testing require a re-open. Consider staying on the editor or showing a toast + staying, to improve editor UX.",
+    "PUT /api/admin/products/{id} requiring a full body forces the frontend to always send merged state; consider PATCH support for partial updates."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter60_day_night_brand.py (new)"
+  ],
+  "success_rate": {"backend": "100% (45/45 across iter60 + regression suites)", "frontend": "100% (all shop day/night + admin editor + CMS discovery fields verified)"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026",
+  "seed_data_creation": "Temporarily set discovery_section.brand_limit=1/brand_sort=name and blancnerolibloom.day_night='night' during tests; both reverted at end (verified: brand_limit=12, brand_sort=count; day_night=both).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "day_night acceptance tests live in backend/tests/test_iter60_day_night_brand.py — run from /app/backend with REACT_APP_BACKEND_URL set. Legacy tests referring to 'date_night' were already migrated (test_catalog_v2::test_filters_tier_datenight_tipe_combine, test_iter55_discovery::test_products_day_night_filter). Frontend selectors: shop-filter-day/night (aria-pressed toggling), admin-product-day-night (select with options — Tidak ada —/Day/Night/Day/Night), cms-section-discovery_section + cms-field-brand_limit + cms-field-brand_sort. Admin content PUT/revert must run through the SPA context (X-Admin-Token interceptor) — external fetch with only Bearer <cp:token:v1> returns 401. Preview DB only has 1 brand so visual brand_limit truncation cannot be seen at UI; backend still validates.",
+  "rca of the issue": "N/A — feature works to spec."
+}
