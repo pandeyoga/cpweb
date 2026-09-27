@@ -205,3 +205,4 @@ block `collector-parfum`, Certbot webroot), dokumentasi `DEPLOYMENT_VPS.md`.
 - Katalog baru klien → imports/catalog/produk.xlsx (1.071 produk, 181 brand, harga 0). replace_catalog.py kini mempertahankan harga/stok lama DB (SKU / slug+opsi) + auto-perbaikan 5 karakter rusak.
 - VPS: scripts/vps_update_catalog.sh (backup mongodump → remote ke pandeyoga/cpweb → deploy.sh → cek katalog → konfirmasi → apply). deploy.sh default REPO_URL pandeyoga + auto set-url. Panduan: docs/PANDUAN_UPDATE_VPS_DAN_DNS.md (DNS: hanya A @ & www → 148.230.102.29; mail/MX/SPF tetap fastcloud).
 - Testing iteration_60: 100% (45 tes backend + UI).
+- 2026-09-27: replace_catalog.py `--placeholder-price N` (varian tanpa harga diisi Rp N, produk tetap ARCHIVED) + vps_update_catalog.sh env PLACEHOLDER_PRICE=1. Script baru scripts/reset_admin_password.py (set ulang password + hapus sesi). Diuji di DB scratch.

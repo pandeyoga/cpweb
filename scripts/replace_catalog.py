@@ -196,7 +196,7 @@ async def load_existing_prices(db):
     return by_sku, by_combo
 
 
-def build_doc(slug, rs, prices, archive_oos, now, existing=({}, {})):
+def build_doc(slug, rs, prices, archive_oos, now, existing=({}, {}), placeholder=0):
     head = rs[0][1]
     variants, from_db = [], 0
     for _, r in sorted(rs, key=lambda x: (SIZES.index(x[1]["option1_value"]), TYPES.index(x[1]["option2_value"]))):
@@ -215,6 +215,10 @@ def build_doc(slug, rs, prices, archive_oos, now, existing=({}, {})):
     options = [{"name": "Ukuran", "values": [s for s in SIZES if any(v["options"]["Ukuran"] == s for v in variants)]},
                {"name": "Tipe", "values": [t for t in TYPES if any(v["options"]["Tipe"] == t for v in variants)]}]
     priced = all(v["price"] > 0 for v in variants)
+    if placeholder and not priced:  # harga sementara → tersimpan tapi WAJIB archived sampai admin isi harga
+        for v in variants:
+            if v["price"] <= 0:
+                v["price"], v["compare_at_price"] = placeholder, None
     in_stock = any(v["stock"] > 0 for v in variants)
     wanted = str(head.get("status") or "active").strip().lower()
     status = "active" if wanted == "active" and priced and (in_stock or not archive_oos) else "archived"
@@ -293,6 +297,8 @@ async def main():
     ap.add_argument("--prices", default=str(DEFAULT_PRICES))
     ap.add_argument("--apply", action="store_true", help="tulis ke database (tanpa ini = cek saja)")
     ap.add_argument("--keep-occasions", action="store_true", help="jangan sembunyikan occasion lama")
+    ap.add_argument("--placeholder-price", type=int, default=0,
+                    help="isi harga sementara (mis. 1) untuk varian tanpa harga; produknya tetap ARCHIVED")
     ap.add_argument("--no-keep-prices", action="store_true",
                     help="JANGAN pakai harga/stok lama dari database (default: dipakai bila Excel kosong)")
     ap.add_argument("--archive-out-of-stock", action="store_true", help="arsipkan produk yang semua stoknya 0")
@@ -307,12 +313,14 @@ async def main():
     prices = load_prices(a.prices, errors)
     now = now_iso()
     existing = ({}, {}) if a.no_keep_prices else await load_existing_prices(db)
-    docs = [] if errors else [build_doc(s, rs, prices, a.archive_out_of_stock, now, existing)
+    placeholder = max(a.placeholder_price, 0)
+    docs = [] if errors else [build_doc(s, rs, prices, a.archive_out_of_stock, now, existing, placeholder)
                               for s, rs in groups.items()]
     priced_db = [d.pop("_priced_from_db") for d in docs]
     summary = {
         "rows": len(rows), "products": len(groups), "errors": len(errors), "warnings": len(warns),
         "price_matrix_filled": f"{sum(1 for v in prices.values() if v[0] > 0)}/36",
+        "placeholder_price": placeholder or None,
         "active": sum(d["status"] == "active" for d in docs),
         "archived_no_price_or_stock": sum(d["status"] == "archived" for d in docs),
         "tiers": dict(Counter(d["tier"] for d in docs)),

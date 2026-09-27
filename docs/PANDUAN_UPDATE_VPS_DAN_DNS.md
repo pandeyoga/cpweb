@@ -23,6 +23,8 @@ Yang dilakukan skrip:
    - Produk tanpa harga disimpan **archived** (tidak tampil) sampai harganya diisi.
    - Produk lama yang tidak ada di file dihapus. Yang pernah dipesan hanya diarsipkan.
 
+Harga belum ada? `sudo PLACEHOLDER_PRICE=1 SKIP_DEPLOY=1 bash /root/vps_update_catalog.sh` → semua produk tersimpan dengan harga Rp1 dan ARCHIVED; admin isi harga lalu aktifkan.
+
 Opsi: `SKIP_CATALOG=1` (hanya update kode), `SKIP_DEPLOY=1` (hanya katalog), `ASSUME_YES=1` (tanpa tanya).
 
 Pulihkan bila perlu:

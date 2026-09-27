@@ -15,6 +15,7 @@
 #
 #  Opsi (env): ASSUME_YES=1 (tanpa tanya) · SKIP_DEPLOY=1 (hanya katalog) · SKIP_CATALOG=1 (hanya kode)
 #              ALLOW_EMPTY=1 (tetap terapkan walau belum ada produk berharga -> toko kosong)
+#              PLACEHOLDER_PRICE=1 (varian tanpa harga diisi Rp1 sementara; produk ARCHIVED sampai admin isi harga)
 # ============================================================================
 set -euo pipefail
 
@@ -78,7 +79,8 @@ if [[ "${SKIP_CATALOG:-0}" == "1" ]]; then warn "SKIP_CATALOG=1 — katalog tida
 log "4/4 Katalog: cek imports/catalog/produk.xlsx (belum mengubah database)"
 cd "${APP_DIR}"
 set +e
-sudo -u "${APP_USER}" "${PY}" scripts/replace_catalog.py; RC=$?
+CAT_ARGS=(); [[ -n "${PLACEHOLDER_PRICE:-}" ]] && CAT_ARGS+=(--placeholder-price "${PLACEHOLDER_PRICE}")
+sudo -u "${APP_USER}" "${PY}" scripts/replace_catalog.py "${CAT_ARGS[@]}"; RC=$?
 set -e
 [[ ${RC} -eq 0 ]] || die "Validasi katalog gagal (lihat ERROR di atas). Database TIDAK diubah."
 
@@ -86,7 +88,7 @@ echo ""
 echo "  Ringkasan di atas: 'active' = produk yang akan tampil (harga lama ditemukan),"
 echo "  'variants_priced_from_existing_db' = varian yang memakai harga lama dari VPS."
 confirm "Terapkan katalog baru ke database ${DB_NAME}?" || { warn "Dibatalkan — katalog tidak diubah."; exit 0; }
-EXTRA=(); [[ "${ALLOW_EMPTY:-0}" == "1" ]] && EXTRA+=(--allow-empty-store)
+EXTRA=("${CAT_ARGS[@]}"); [[ "${ALLOW_EMPTY:-0}" == "1" || -n "${PLACEHOLDER_PRICE:-}" ]] && EXTRA+=(--allow-empty-store)
 set +e
 sudo -u "${APP_USER}" "${PY}" scripts/replace_catalog.py --apply "${EXTRA[@]}"; RC=$?
 set -e
