@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="1" tests="39" time="83.705" timestamp="2026-09-26T20:35:30.477394+00:00" hostname="agent-env-1af15ff0-42d9-43ab-aea9-d72625ff6e39"><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_no_auth_401[expire-orders]" time="0.181" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_no_auth_401[payment-reminders]" time="0.259" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_no_auth_401[sync-payments]" time="0.121" /><testcase classname="tests.test_shipment_e16.TestShipHappyPath" name="test_ship_with_jnt_stores_shipment_and_sends_email" time="4.124" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_wrong_bearer_401[expire-orders]" time="0.124" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_wrong_bearer_401[payment-reminders]" time="0.119" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_wrong_bearer_401[sync-payments]" time="0.141" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_reminders_ok_202" time="0.118" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_sync_payments_ok_202" time="0.619" /><testcase classname="tests.test_email_notify_e15.TestCronAuth" name="test_expire_orders_ok_202" time="0.116" /><testcase classname="tests.test_shipment_e16.TestShipStatusValidation" name="test_shipped_without_resi_400" time="1.731" /><testcase classname="tests.test_shipment_e16.TestShipStatusValidation" name="test_shipped_short_resi_400_status_unchanged" time="1.227" /><testcase classname="tests.test_shipment_e16.TestShipHappyPath" name="test_update_shipment_same_values_no_new_email" time="5.853" /><testcase classname="tests.test_shipment_e16.TestShipStatusValidation" name="test_shipped_symbol_resi_400" time="1.157" /><testcase classname="tests.test_shipment_e16.TestShipStatusValidation" name="test_shipped_invalid_courier_400" time="1.142" /><testcase classname="tests.test_sales_flow.TestBugSales03" name="test_transfer_pending_to_paid_manual_rejected" time="1.113" /><testcase classname="tests.test_sales_flow.TestBugSales03" name="test_cod_pending_to_paid_allowed" time="0.121"><skipped type="pytest.skip" message="COD method not configured: 400 {&quot;detail&quot;:&quot;COD tidak tersedia — silakan bayar online&quot;}">/app/backend/tests/test_sales_flow.py:232: COD method not configured: 400 {"detail":"COD tidak tersedia — silakan bayar online"}</skipped></testcase><testcase classname="tests.test_sales_flow.TestBugSales03" name="test_transfer_paid_via_verified_proof" time="0.503" /><testcase classname="tests.test_sales_flow.TestBugSales04" name="test_overpay_single_proof_rejected" time="2.682" /><testcase classname="tests.test_shipment_e16.TestShipHappyPath" name="test_update_shipment_changed_resi_sends_update_email" time="63.719"><failure message="requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='parfum-ecommerce-1.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/admin/orders/CP00000087/shipment (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='parfum-ecommerce-1.preview.emergentagent.com', port=443) at 0xf9daedeba2d0&gt;, 'Connection to parfum-ecommerce-1.preview.emergentagent.com timed out. (connect timeout=30)'))">/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:239: in _new_conn
+    sock = connection.create_connection(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/connection.py:85: in create_connection
+    raise err
+/root/.venv/lib/python3.11/site-packages/urllib3/util/connection.py:73: in create_connection
+    sock.connect(sa)
+E   TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:793: in urlopen
+    response = self._make_request(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:494: in _make_request
+    raise new_e
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:470: in _make_request
+    self._validate_conn(conn)
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:1125: in _validate_conn
+    conn.connect()
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:827: in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/urllib3/connection.py:248: in _new_conn
+    raise ConnectTimeoutError(
+E   urllib3.exceptions.ConnectTimeoutError: (&lt;HTTPSConnection(host='parfum-ecommerce-1.preview.emergentagent.com', port=443) at 0xf9daedeba2d0&gt;, 'Connection to parfum-ecommerce-1.preview.emergentagent.com timed out. (connect timeout=30)')
+
+The above exception was the direct cause of the following exception:
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:696: in send
+    resp = conn.urlopen(
+/root/.venv/lib/python3.11/site-packages/urllib3/connectionpool.py:847: in urlopen
+    retries = retries.increment(
+/root/.venv/lib/python3.11/site-packages/urllib3/util/retry.py:555: in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='parfum-ecommerce-1.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/admin/orders/CP00000087/shipment (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='parfum-ecommerce-1.preview.emergentagent.com', port=443) at 0xf9daedeba2d0&gt;, 'Connection to parfum-ecommerce-1.preview.emergentagent.com timed out. (connect timeout=30)'))
+
+During handling of the above exception, another exception occurred:
+backend/tests/test_shipment_e16.py:258: in test_update_shipment_changed_resi_sends_update_email
+    r = requests.put(f"{BASE}/admin/orders/{code}/shipment",
+/root/.venv/lib/python3.11/site-packages/requests/api.py:151: in put
+    return request("put", url, data=data, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/api.py:71: in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:651: in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/sessions.py:784: in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/root/.venv/lib/python3.11/site-packages/requests/adapters.py:717: in send
+    raise ConnectTimeout(e, request=request)
+E   requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='parfum-ecommerce-1.preview.emergentagent.com', port=443): Max retries exceeded with url: /api/admin/orders/CP00000087/shipment (Caused by ConnectTimeoutError(&lt;HTTPSConnection(host='parfum-ecommerce-1.preview.emergentagent.com', port=443) at 0xf9daedeba2d0&gt;, 'Connection to parfum-ecommerce-1.preview.emergentagent.com timed out. (connect timeout=30)'))</failure></testcase><testcase classname="tests.test_sales_flow.TestBugSales04" name="test_two_full_proofs_second_verify_fails_and_reverts" time="0.625" /><testcase classname="tests.test_sales_flow.TestBugSales04" name="test_partial_dp_then_remainder" time="0.753" /><testcase classname="tests.test_shipment_e16.TestCouriers" name="test_list_couriers_admin" time="0.469" /><testcase classname="tests.test_shipment_e16.TestCouriers" name="test_list_couriers_no_auth" time="23.400" /><testcase classname="tests.test_shipment_e16.TestCouriers" name="test_list_couriers_non_admin" time="15.572" /><testcase classname="tests.test_sales_flow.TestBugSales01" name="test_guest_checkout_returns_access_token_and_404_without" time="1.067" /><testcase classname="tests.test_sales_flow.TestBugSales01" name="test_logged_in_owner_vs_other_user" time="12.626" /><testcase classname="tests.test_sales_flow.TestBugSales05" name="test_cancel_pending_ok" time="2.340" /><testcase classname="tests.test_sales_flow.TestBugSales05" name="test_cancel_paid_rejected" time="0.811" /><testcase classname="tests.test_email_notify_e15.TestAdminEmailLogs" name="test_non_admin_forbidden" time="0.617" /><testcase classname="tests.test_email_notify_e15.TestAdminEmailLogs" name="test_list_shape_and_detail_and_resend" time="3.778" /><testcase classname="tests.test_shipment_e16.TestAuthGuards" name="test_shipment_update_no_auth" time="0.123" /><testcase classname="tests.test_shipment_e16.TestShipHappyPath" name="test_update_shipment_changed_courier_sends_update_email" time="6.588" /><testcase classname="tests.test_shipment_e16.TestAuthGuards" name="test_shipment_update_non_admin" time="0.591" /><testcase classname="tests.test_sales_flow.TestBugSales02" name="test_concurrent_cancels_restore_once" time="1.114" /><testcase classname="tests.test_email_notify_e15.TestPaidConfirmation" name="test_online_pay_creates_one_paid_email" time="4.945" /><testcase classname="tests.test_email_notify_e15.TestPaymentReminders" name="test_slot_selection_and_idempotency" time="2.093" /><testcase classname="tests.test_shipment_e16.TestShipHappyPath" name="test_lainnya_uses_cekresi" time="1.193" /><testcase classname="tests.test_shipment_e16.TestShipHappyPath" name="test_update_shipment_on_non_shipped_400" time="1.118" /></testsuite></testsuites>

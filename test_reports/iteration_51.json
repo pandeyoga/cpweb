@@ -1,0 +1,38 @@
+{
+  "summary": "Catalog v2 + audit adjustments tested. Backend pytest suite (test_catalog_v2, test_sales_flow, test_email_notify_e15, test_shipment_e16): 45 passed, 1 skipped (COD pending->paid, expected). Frontend: shop filter panel shows only Kategori Aroma/Kisaran Harga/Momen/Tier/Tipe/Character/Untuk/Notes with correct chip testids and NO Konsentrasi/Occasion (office/evening/party). URL updates for ?date_night=1, ?tier=CP01, ?tipe=Refine; legacy /shop?occasion=date-night pre-selects Date Night chip. Product cards show 'TIER · GENDER' meta (e.g. EXCLUSIVE · UNISEX), no EDP/EDT text. Product detail /parfum/noir-oud-intense accordion no longer has 'Kandungan'. Refine filter shows only noir-oud-intense with min price Rp 485.000 (Refine variant). Quick-add adds cheapest in-stock variant (toast confirmed). Admin editor: tier select + date-night switch present, no Konsentrasi/Kandungan/Occasion facet picker; tier=EXCLUSIVE persisted on noir-oud-intense from backend test. Admin sidebar has no 'Occasion'; /admin/occasion redirects to /admin/produk. Admin orders search input + count footer 'Menampilkan 50 dari 54 pesanan' + Muat lebih banyak button all present and functional. Contact page valid submit shows 'Pesan terkirim' toast; invalid email caught by HTML5 native validation (form doesn't submit; backend 422 verified in pytest). Admin /admin/log-email shows admin-contact-messages card. Footer newsletter posts and shows 'Terima kasih! Email Anda sudah terdaftar'. Mobile 390px: filter sheet opens with all v2 chips visible.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Product detail /parfum/noir-oud-intense image assets", "issues": ["Product bottle images still have 'EDP' printed on the bottle label artwork. This is a static image asset (creative), not a data field. Non-blocking, but since 'concentration' is removed from the data model per spec v2, consider updating the placeholder illustrations to avoid mixed messaging."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_catalog_v2.py",
+    "/app/backend/tests/test_sales_flow.py",
+    "/app/backend/tests/test_email_notify_e15.py",
+    "/app/backend/tests/test_shipment_e16.py",
+    "/app/test_reports/pytest/iter51.xml"
+  ],
+  "action_items": [
+    "(FIXED by tester) backend/admin_schemas.py: AdminStoreConfigInput field was named 'intro' while frontend AdminStoresPage.js sends 'stores_intro' and services/stores.update_config reads 'stores_intro'. Because ConfigDict(extra='ignore'), the field was silently dropped and the store intro never persisted (PUT /api/admin/store-config returned 200 but value unchanged). Renamed schema field to 'stores_intro' — verified persistence via API and public /api/stores now reflects updates. Main agent: please review naming consistency (admin_schemas vs frontend payload vs service getter) across other similar admin config endpoints."
+  ],
+  "critical_code_review_comments": [
+    "Field-name coupling between Pydantic AdminStoreConfigInput, frontend payload keys, and services/stores.update_config's data.get(...) is fragile. Consider centralising the config key list or writing a schema-round-trip unit test to catch drift. Same pattern could apply to other 'Settings' style endpoints.",
+    "Contact form invalid email path relies solely on HTML5 native validation (input type=email). Consider also surfacing a toast/inline error for a11y users who bypass native validation, so the 'invalid email shows error toast' spec is met via app code (not browser)."
+  ],
+  "updated_files": [
+    "/app/backend/admin_schemas.py"
+  ],
+  "success_rate": {"backend": "100% (45/45 executed, 1 skipped by design)", "frontend": "100% after intro fix"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026, customer@collectorparfum.id / Customer#2026",
+  "seed_data_creation": "None. Test data used TEST_/uuid-tagged emails via /api/contact and /api/newsletter. All admin edits (tier roundtrip, stores intro) were restored to original values.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Catalog v2 contract (tier, date_night, tipe, no concentration/ingredients) is stable across API, seed, UI, admin editor and CSV export. Store config PUT bug fixed by renaming AdminStoreConfigInput.intro -> stores_intro. Test suite backend/tests/test_catalog_v2.py already covers the main v2 assertions and passes.",
+  "rca of the issue": "Store intro save silent no-op: AdminStoreConfigInput used field name 'intro' (with model_config extra='ignore'). Frontend sent 'stores_intro' — Pydantic dropped it. Router forwards payload.model_dump() to services/stores.update_config which iterates keys ('stores_intro' among them). Because frontend key was dropped AND service never reads 'intro', the value was silently discarded despite 200 OK. Repro: PUT /api/admin/store-config with {stores_intro:'X'} returns 200 but GET still shows previous value. Fix: rename schema field to 'stores_intro' so it round-trips end to end. Verified via API+UI."
+}

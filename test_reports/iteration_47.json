@@ -1,0 +1,39 @@
+{
+  "summary": "E15 (email transaksional) end-to-end verified. Backend: 13/13 new tests pass in /app/backend/tests/test_email_notify_e15.py covering (a) paid_confirmation email logged exactly once when Midtrans mock-pay hits settlement (duplicate webhook does NOT dup), (b) cron /payment-reminders slot logic (10h -> reminder_12h, 90min -> reminder_2h, 20h -> nothing) + idempotency across reruns, orders.emails_sent recorded, (c) cron auth (401 without/with wrong bearer for all 3 cron endpoints; 202 with correct WEBHOOK_CRON_SECRET; sync-payments cron_runs.result has {checked, mode}), (d) admin email-logs endpoints: list has {mode:'mock', from_email:'noreply@collectorparfum.com', items without html}, detail includes branded html with order code + item + 'Rp ' + /pesanan-sukses link, resend creates a new mocked log, non-admin/anon -> 401/403, unknown id -> 404. Regression test_sales_flow.py still 10 passed / 1 skipped (COD expected). Frontend admin/pembayaran verified: admin-email-logs card renders below admin-gateway-transactions, admin-email-mode-note shows 'MODE SIMULASI', 8 admin-email-log-row rendered, admin-email-preview-button opens admin-email-preview-dialog with admin-email-preview-frame iframe rendering the branded Collector Parfum email (item name, Rp 385.000 / Rp 407.000, Dikirim ke block, 'Lacak Pesanan' button pointing to /pesanan-sukses?code=...&t=...).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "admin email preview dialog", "issues": ["Radix DialogContent lacks aria-describedby (console warning: 'Missing Description or aria-describedby={undefined} for {DialogContent}'). Non-blocking a11y warning only; consider adding <DialogDescription> or aria-describedby to the preview/reject dialogs."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_email_notify_e15.py",
+    "/app/test_reports/pytest/e15_results.xml",
+    "/app/backend/tests/test_sales_flow.py"
+  ],
+  "action_items": [
+    "Optional (a11y): add DialogDescription (or aria-describedby) to admin-email-preview-dialog and admin reject-proof dialog to silence Radix warnings.",
+    "Optional: expose mode note in the same viewport by mounting it before rows load; today it's below the fold on first render (still rendered, functional, testid present)."
+  ],
+  "critical_code_review_comments": [
+    "services/notify.py: idempotency uses compare-and-set on orders.emails_sent ({$ne + $addToSet}) — correct pattern, immune to duplicate webhooks and parallel cron runs.",
+    "services/mailer.py: mode() re-evaluates env each call -> good; enables switching to live by just filling SMTP_* without restart of cron scheduling logic (still needs supervisor reload for env pickup in practice).",
+    "routers/cron.py: uses hmac.compare_digest -> good. run_id insert with DuplicateKeyError -> duplicate:true accepted -> good idempotency (assumes unique index on cron_runs.run_id — verify index exists).",
+    "notify.paid_async uses asyncio.get_running_loop().create_task and holds strong refs in _tasks set -> good (prevents GC-cancel race).",
+    "email_templates: HTML/text escape via html.escape -> good; total formatting 'Rp x.xxx' matches spec.",
+    "gateway.sync_pending returns list of order codes as 'checked'; cron.py summary maps list->len via `(len(v) if isinstance(v, list) else v)` -> good.",
+    "Minor: gateway.mock_complete triggers handle_webhook which in mock mode still calls mt.get_status inside handle_webhook — verify it short-circuits under mock (looks OK; verify_signature true in mock)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_email_notify_e15.py (new)"
+  ],
+  "success_rate": {"backend": "100% (13/13 E15 + 10/10 sales regression, 1 pre-existing COD skip)", "frontend": "100% observed (card, ordering, rows, mode note, preview dialog + iframe content) — resend-adds-row not re-verified in UI due to dialog overlay in test script; backend endpoint tested and passes"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026 ; customer@collectorparfum.id / Customer#2026 ; WEBHOOK_CRON_SECRET from backend/.env",
+  "seed_data_creation": "None persistent. All test orders deleted from DB in fixtures/finally blocks; test email_logs deleted; payment_transactions/analytics_events cleaned.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "E15 email pipeline is solid in mock mode. When SMTP creds are provided in backend/.env, mailer.mode() flips to 'live' and mailer._send_sync path is exercised — that path is not covered by tests (would need SMTP mocking or a fakes). Consider adding a unit test that patches asyncio.to_thread to assert live-mode branch marks status='sent'. New pytest file: /app/backend/tests/test_email_notify_e15.py — reuse in future regressions.",
+  "rca of the issue": "N/A — no bugs found for E15."
+}

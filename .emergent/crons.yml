@@ -1,0 +1,36 @@
+crons:
+  - name: expire-orders
+    description: "Batalkan otomatis pesanan belum dibayar yang lewat batas bayar 24 jam (stok & voucher kembali)"
+    cron: "*/15 * * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/expire-orders"
+    method: POST
+    enabled: true
+  - name: payment-reminders
+    description: "Email pengingat ke pembeli 12 jam & 2 jam sebelum batas bayar habis (sekali per slot)"
+    cron: "*/15 * * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/payment-reminders"
+    method: POST
+    enabled: true
+  - name: sync-payments
+    description: "Cadangan webhook: tarik ulang status transaksi Midtrans pending lalu tandai lunas otomatis"
+    cron: "*/10 * * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/sync-payments"
+    method: POST
+    enabled: true
+  - name: daily-backup
+    description: "Backup harian otomatis semua data (02.00 WIB), menyimpan 14 backup otomatis terakhir"
+    cron: "0 19 * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/daily-backup"
+    method: POST
+    enabled: true
+  - name: reconcile
+    description: "Rekonsiliasi: lanjutkan pembatalan/reservasi stok, bukti bayar, uang Midtrans, refund & email yang terputus"
+    cron: "*/10 * * * *"
+    # Cron endpoints must ack 2xx immediately; enqueue/background the actual work.
+    endpoint: "{{BASE_URL}}/api/cron/reconcile"
+    method: POST
+    enabled: true

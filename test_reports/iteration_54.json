@@ -1,0 +1,30 @@
+{
+  "summary": "Iter54 focused on E19 money/voucher end-to-end. Backend HTTP suite test_iter54_e19_e2e.py: 9/9 passed on public URL — /health & /payments/config (mock), voucher validate, guest checkout with idempotency key, PARALLEL 5x POST /orders/{code}/pay returning SAME gateway_order_id (single attempt), customer login checkout with admin cancel restoring stock, admin CANNOT cancel paid order (400) and partial refund records exactly once, /api/cron/reconcile & /api/cron/expire-orders ack 202 and same X-Webhook-Id -> duplicate ack, cron 401 without secret. Frontend E2E via public URL: customer login (/akun) -> shop -> PDP -> add-to-cart -> /checkout, address dialog filled, voucher WELCOME10 applied (checkout-voucher-applied badge visible). BUTIR 18 VOUCHER RECHECK VERIFIED: page.route('**/api/vouchers/validate', abort) then changing shipping option triggered `checkout-voucher-unverified` banner AND `checkout-voucher-recheck` button; pressing `checkout-place-order-button` produced toast 'Diskon voucher belum terverifikasi — Tekan Validasi ulang sebelum membuat pesanan' and order was NOT created. Unrouted + clicked recheck -> unverified cleared -> place order succeeded, redirected to /pesanan-sukses?code=CP00000159 with Midtrans mock simulation modal visible. CartSync verified: PUT /api/cart from session A persisted and GET /api/cart from fresh session B returned identical items for same customer. Storefront regression: /shop (12 products), /lokasi, /kontak load fine. Admin login via /akun with admin creds works (Admin Collector badge), /admin/pesanan lists paginated orders (26 rows shown, new orders visible with correct statuses Menunggu/Dibayar/Dibatalkan), /admin/konten Visual Builder loads.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter54_e19_e2e.py",
+    "/app/test_reports/pytest/iter54.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/gateway.py start_payment uses pay_locks (unique on order_code) + subsequent poll loop for concurrent callers — correctly returns single gateway_order_id under parallel POST /pay (verified with 5x async). Lock TTL 30s and 25*0.2s polling loop is well matched.",
+    "services/order_create.py: reserving->pending CAS + abort_reservation on any failure, plus sweep_stale_reserving (2min cutoff) via reconcile cron — well tested by parametrized crash-at-every-write in existing test_ledger_e19.py; HTTP-level tests confirm real endpoint behavior.",
+    "hooks/useCheckoutVoucher.js validates voucher on every cart.subtotal/shipPrice/selectedShipping change and only sets voucherCheck='ok' after successful re-validate. Butir 18 correctly gates place-order via `voucherUnverified` flag; toast description guides user to recheck. Solid.",
+    "routers/cron.py: correct Authorization+HMAC compare, insert cron_runs with unique run_id, _reclaim CAS for failed/stale runs, ack 202 always. Duplicate run_id returns {duplicate: true}, verified.",
+    "routers/admin_orders.py: _with_allowed computes allowed_transitions server-side (SALES-18) — good source of truth; paid orders exclude 'cancelled' correctly so /status returns 400.",
+    "Leftover seed shipping method 'Uji' (id t-ship) from earlier ledger-e19 unit tests is still present in shipping_methods collection (shows up as an option on /checkout). Non-blocking but cluttering. Consider adding a teardown in test_ledger_e19._fixtures or a dedicated cleanup pass in scripts/qa_cleanup.py to remove {'id': 't-ship'} and {'id': 't-pay'}."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter54_e19_e2e.py"],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% critical flows"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026 ; customer@collectorparfum.id / Customer#2026 ; WEBHOOK_CRON_SECRET dari /app/backend/.env",
+  "seed_data_creation": "Guest checkout + customer checkout created orders CP00000155..CP00000159. Admin-cancelled test order restored stock; paid test order refunded 1/3 total. Ran scripts/qa_cleanup.py (0 dihapus). Test order rows remain in orders collection but are benign historical data used for the admin list assertion.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "E19 (ledger idempoten & rekonsiliasi, butir 3/4/5/8/9/11/12/13/14) + butir 18 (voucher checkout revalidate) fully verified end-to-end on public URL. Backend HTTP e2e suite lives at backend/tests/test_iter54_e19_e2e.py (9 tests, 5.9s runtime). If re-running, note that test_admin_cancel_pending_restores_stock and test_admin_cannot_cancel_paid_... rely on seed voucher WELCOME10 existing and at least one active product+variant with stock>=3.",
+  "rca of the issue": "No issues found."
+}

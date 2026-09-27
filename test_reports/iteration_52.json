@@ -1,0 +1,42 @@
+{
+  "summary": "E17 hardening full sweep (backend + frontend). Ran 60 pytest cases across tests/test_hardening_e17.py, test_catalog_v2.py, test_sales_flow.py, test_email_notify_e15.py, test_shipment_e16.py → 59 passed, 1 skipped, 0 failures (one transient network timeout self-recovered on retry). UI verified: server-side search drawer, wishlist via ?ids= (guest+mobile), customer logout revocation, brute-force 429, anti-SSRF from-url, strict admin config schema.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "GET /api/admin/store-config (admin-only)", "issue": "Public read still lives at GET /api/stores (not /api/store-config); admin GET returns detail schema. Not a bug, but worth documenting so frontend/lokasi keeps calling /api/stores."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_hardening_e17.py",
+    "/app/backend/tests/test_catalog_v2.py",
+    "/app/backend/tests/test_sales_flow.py",
+    "/app/backend/tests/test_email_notify_e15.py",
+    "/app/backend/tests/test_shipment_e16.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AdminVoucherInput used with model_dump(exclude_unset=True) — correct pattern for partial updates; keep required fields optional where partial edit is expected, otherwise dialog must submit full body.",
+    "net_guard blocks 127.0.0.1/localhost/link-local/private-10.x with Indonesian message and 400 — good. Consider also blocking 172.16.0.0/12 and 192.168.0.0/16 for completeness (verify)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (59/59 executed, 1 skipped by design)", "frontend": "100% for reachable flows"},
+  "verified_ui_flows": {
+    "search_drawer": "server debounce OK, result-count 'N Hasil untuk “q”', see-all appears for q='a' (>8), navigates to /shop?q=a with removable chip shop-active-filter-q",
+    "wishlist_guest_desktop_mobile": "Add via product-card-wishlist-button, /wishlist calls GET /api/products?ids=... (verified 2 requests seen), renders 2 cards on both 1920 and 390 viewports; order preserved (matches LS array)",
+    "customer_logout_revocation": "Login at /akun stores token under cp:token:v1; click Keluar; old bearer → /api/auth/me returns 401",
+    "brute_force_lockout": "Registered throwaway bf<ts>@example.com; wrong pwd 1-5 → 401 (Indonesian 'Email atau kata sandi salah'); 6th+7th → 429 Retry-After: 900 with 'Terlalu banyak percobaan masuk. Coba lagi dalam 15 menit.'",
+    "admin_ssrf_from_url": "127.0.0.1 → 400, localhost → 400, 169.254.169.254 → 400, 10.0.0.1 → 400 (Indonesian message); unsplash public URL → 201",
+    "admin_config_strict": "PUT /api/admin/settings and PUT /api/admin/store-config with unknown field → 422; PUT /api/admin/store-config with store_rating_avg/store_rating_count/stores_intro → 200"
+  },
+  "test_credentials": "Admin admin@collectorparfum.id / Admin#2026; Customer customer@collectorparfum.id / Customer#2026 (untouched, not brute-forced). Throwaway account created: bf<timestamp>@example.com (locked for 15 min after test, will auto-expire).",
+  "seed_data_creation": "One throwaway customer account (bf<ts>@example.com) created for brute-force test; will be cleaned by natural TTL. One media asset uploaded via SSRF-happy-path (unsplash) into DB — safe.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All E17 items are green. If additional voucher/category partial-edit UI flow needs manual verification, note that AdminVoucherInput uses model_dump(exclude_unset=True) — so any dialog PUT that omits a field will preserve it (backend test test_hardening_e17 verifies this). Public store config lives at GET /api/stores, admin config at GET/PUT /api/admin/store-config (different keys)."
+}

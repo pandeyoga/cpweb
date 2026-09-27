@@ -1,0 +1,28 @@
+{
+  "summary": "Iter56 validated brand profile CMS (logo/image/desc/order/hidden), facet image/icon_image, and discovery_section CMS tab labels/icons end-to-end. Backend: 9/9 pytest passes on public URL (backend/tests/test_iter56_brand_discovery.py). GET /api/admin/brands returns rows with keys {name,count,active_count,logo,image,desc,order,hidden,has_profile}; Collector is present. Non-admin GET /api/admin/brands returns 401/403. PUT /api/admin/brands upserts a profile → GET /api/brands includes {logo,image,desc,order}; hidden=true hides Collector from /api/brands; DELETE /api/admin/brands/profile?name=Collector cleans up and public row reverts to empty logo/image/desc/order=0. DELETE unknown name returns 404. When order=1 set, Collector sorts first in GET /api/brands. GET /api/characters exposes {name,slug,count} and after PUT /api/admin/characters/{id} with image + icon_image the public /api/characters row echoes those fields. CMS /api/admin/content/schema exposes discovery_section with all required fields (title, eyebrow, subtitle, brand_label, brand_icon, character_label, character_icon, editor_label, editor_icon, best_label, best_icon). PUT /api/admin/content/discovery_section {data:{...}} persists brand_label='TESTMerk' + brand_icon='/uploads/test-tab.svg' and public /api/content.discovery_section returns them; revert restores originals. Frontend: home-discovery-section renders on the public URL; computed styles confirm contrast fix: discovery-tabs bg=rgb(255,255,255) border=rgba(0,0,0,0.1) plus shadow; discovery-brand-tile has cp-card-solid border=rgba(60,45,20,0.1) + inset white shadow + drop shadow; discovery-view-all pill white with dark border. With seeded profile (logo + image + desc + order=1) the beranda Brand tab shows discovery-brand-tile with discovery-brand-cover img (unsplash 4:3), discovery-brand-logo inside white pill, 12 PARFUM meta and description 'Brand pilihan editor iter56.' → matches acceptance. After setting hidden=true, GET /api/brands drops Collector as required. Admin brand dialog (AdminBrandsPage + BrandDialog) exposes admin-brand-logo, admin-brand-image, admin-brand-desc, admin-brand-order, admin-brand-hidden, admin-brand-save + admin-brands-table + admin-brands-search per code review. Character admin dialog exposes admin-facet-icon-image + admin-facet-image fields in AdminFacetPage per registry. All seeded test data cleaned up (brand profile deleted; character image + CMS discovery_section revert executed within tests).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter56_brand_discovery.py",
+    "/app/test_reports/pytest/iter56.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/admin_brands.list_admin merges profile keys and product counts by brand name — good. Consider indexing db.products.brand and db.brands.name for large catalogs.",
+    "services/catalog.list_brands applies profile.hidden filter after the aggregate limit; if BRANDS_MAX (500) is ever hit, some hidden brands could still take slots. Fine at current scale.",
+    "components/home/discovery/BrandTile.js uses <img src={cover}> with object-cover; alt is brand.name — good. When cover is present the giant monogram behind is skipped, avoiding visual clutter — nice.",
+    "components/admin/brands/BrandDialog.js coerces order to Number(form.order)||0 on save (matches backend AdminBrandInput). Missing client-side clamp (min=0 is set on Input though).",
+    "content_registry.discovery_section has {brand,character,editor,best}_{label,icon} — matches acceptance. IMG helper is used for icons so admin gets media picker.",
+    "Contrast fix in styles/depth.css .cp-card-solid + html:not(.cp-dark) .cp-glass border rgba(60,45,20,0.1x) is applied consistently to tiles/tabs/view-all — verified via computed styles on live URL."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter56_brand_discovery.py"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% critical flows"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026",
+  "seed_data_creation": "Temporary: brand profile Collector (logo/image/desc/order=1) + Woody character image/icon_image + CMS discovery_section.brand_label — ALL reverted/deleted at end of tests. Final GET /api/brands shows Collector with empty logo/image/desc/order=0.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Selectors: admin-brands-table, admin-brands-search, admin-brand-row, admin-brand-edit, admin-brand-logo, admin-brand-image, admin-brand-desc, admin-brand-order, admin-brand-hidden, admin-brand-save; discovery-brand-tile, discovery-brand-cover, discovery-brand-logo; discovery-character-icon-image, discovery-character-photo; discovery-tab-brand-icon, discovery-tab-character-icon, discovery-tab-editor-icon, discovery-tab-best-icon. Endpoints: GET/PUT /api/admin/brands, DELETE /api/admin/brands/profile?name=, PUT /api/admin/characters/{id} (facet image/icon_image), PUT /api/admin/content/discovery_section body={data:{...}}. Note: login response returns {token, user} (not access_token); /admin/login page is not a form-based login on preview — API path works via POST /api/auth/login.",
+  "rca of the issue": "No issues found. Contrast fix (cp-card-solid + explicit borders) resolves the earlier 'brand card blends with cream background' complaint; verified via getComputedStyle."
+}

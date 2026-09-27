@@ -1,0 +1,34 @@
+{
+  "summary": "Iter57 validated Trust Strip, Marquee (kata berjalan), and Announcement Bar CMS end-to-end. Backend: 7/7 pytest on public URL (backend/tests/test_iter57_trust_marquee_announcement.py). GET /api/admin/content/schema exposes trust (repeater items with title/desc/icon(select 19 opsi)/icon_image(image)/to), marquee_words (items list, speed slow|default|fast, style light|dark|brass, separator text, separator_image image) and announcement (items list, speed, separator). Public GET /api/content returns registry defaults (Sejak 1970 award /tentang; Biang Impor Pilihan shield-check; 3 Cabang di Bandung map-pin /lokasi). PUT /api/admin/content/{key} with test payloads persists — public reflects new titles, icon values, icon_image, speed=fast/slow, style=dark, custom separator. POST /api/admin/content/{key}/revert to_default=true restores defaults exactly (verified titles/items/speed/style match registry). Non-admin PUT returns 401/403. Frontend integration verified on preview URL: after PUT of 4 trust items {UI_A truck /shop, UI_B crown '', UI_C sparkles /tentang, UI_D flame /lokasi}, beranda [data-testid=trust-strip] rendered class 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-y border-black/10' with all 4 trust-item-0..3 present. trust-item-0 href='/shop', trust-item-1 no href (renders as div), trust-item-2 href='/tentang', trust-item-3 href='/lokasi'. Icons correctly mapped via getFacetIcon (truck/crown/sparkles/flame visible in screenshot). Announcement bar updated to slow speed with UIANN1/UIANN2 items visible (marquee-strip inside announcement-bar). Marquee_words below hero updates items+speed(fast track class)+dark bg style. All temporary content reverted after test — final GET /api/content confirms defaults restored (trust: ['Sejak 1970','Biang Impor Pilihan','3 Cabang di Bandung']; marquee_words items ELEGAN..BANDUNG; announcement 5 original items).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "TrustStrip (components/layout/AnnouncementBar.js)", "issues": ["Hardcoded TRUST_DEFAULT fallback ('Gratis Ongkir/100% Original/Retur 3 Hari') di komponen tidak sinkron dengan registry default ('Sejak 1970/Biang Impor Pilihan/3 Cabang di Bandung'). Bila ContentContext belum hydrate, pengguna melihat teks yang berbeda sesaat. Rekomendasi: hapus fallback di komponen dan andalkan default dari content_registry via useContent."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter57_trust_marquee_announcement.py",
+    "/app/test_reports/pytest/iter57.xml"
+  ],
+  "action_items": [
+    "Opsional: samakan TRUST_DEFAULT / ANNOUNCE_DEFAULT fallback di frontend dengan registry default agar tidak ada flicker teks yang berbeda saat ContentContext memuat."
+  ],
+  "critical_code_review_comments": [
+    "content_registry.trust items schema lengkap (title, desc, icon SEL dgn 19 opsi, icon_image IMG, to). ICON_OPTIONS di registry cocok dengan taxonomyIcons.getFacetIcon.",
+    "AnnouncementBar.TrustStrip menghitung kelas grid dari items.length: 1/2/3 berturut-turut sm:grid-cols-1/2/3, selain itu default 'sm:grid-cols-2 lg:grid-cols-4' — sesuai spesifikasi (4 item → grid 4 kolom di layar lebar). Verified live.",
+    "MarqueeStrip menerapkan class 'slow'/'fast' pada .cp-marquee-track sesuai prop speed. HomePage meneruskan speed & style dari marquee_words CMS. Verified.",
+    "AnnouncementBar meneruskan speed & separator dari CMS ke MarqueeStrip (dark=true selalu untuk bar atas). separator_image tidak dipakai di announcement (registry pun tidak mengexpose field ini untuk key announcement) — konsisten.",
+    "TrustItem membungkus dengan <Link> hanya bila item.to ada, else <div>. data-testid trust-item-<i> selalu ada. Bagus.",
+    "Hardcoded fallback TRUST_DEFAULT / ANNOUNCE_DEFAULT tidak sinkron dengan registry default; bila fetch content telat/gagal, pengguna melihat 'Gratis Ongkir/COD Tersedia' — bukan konten sebenarnya."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter57_trust_marquee_announcement.py"],
+  "success_rate": {"backend": "100% (7/7)", "frontend": "100% critical flows"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026",
+  "seed_data_creation": "Temporary CMS overrides on keys trust, marquee_words, announcement — ALL reverted via POST /api/admin/content/{key}/revert to_default=true within tests and post-UI-run. Final /api/content verified back to registry defaults.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Endpoints: GET /api/admin/content/schema, GET /api/admin/content, PUT /api/admin/content/{key} body={data:{...}}, POST /api/admin/content/{key}/revert body={to_default:true} atau {revision_id:...}. Selectors: announcement-bar, trust-strip, trust-item-<i>, trust-icon-image (bila icon_image diisi), marquee-strip (dipakai untuk announcement & marquee_words), marquee-separator-image (bila separator_image). Icon set dari getFacetIcon: 19 nama (truck, shield-check, rotate-ccw, store, map-pin, award, badge-check, gift, clock, package, crown, sparkles, heart, star, droplets, leaf, gem, sun-moon, flame). MARQUEE_BG di HomePage: light=paper-fog, dark='' (bg from MarqueeStrip dark prop), brass=champagne.",
+  "rca of the issue": "N/A — semua fungsi CMS untuk trust/marquee/announcement bekerja: PUT persist, public /api/content dan komponen frontend (data-testid trust-strip, trust-item, announcement-bar, marquee-strip) langsung memantulkan perubahan; revert to_default mengembalikan konten registry secara akurat."
+}

@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 49 verified all remaining backlog items: SALES-11/12 (voucher guest gating + user_id spoof protection), SALES-18 (allowed_transitions on GET/PUT status/PUT shipment), shipment audit_logs {from:{courier,tn}, to:{...}}, SALES-20 (dashboard + CRM segments via Mongo aggregation, paid_revenue delta on paid order), daily-backup cron (401/202, background creates system-cron backup, retention <=14), courier URL constants (jne, jnt, lainnya fallback), and a11y aria-labels on contact/newsletter/login/register inputs. Backend: /app/backend/tests/test_iter49_features.py 14/14 passed. Regression: test_sales_flow.py + test_email_notify_e15.py = 23 passed / 1 skipped (pre-existing COD). Combined 37 passed / 1 skipped. Frontend: admin login + dashboard + CRM segments API + a11y attributes all confirmed on REACT_APP_BACKEND_URL (parfum-ecommerce-1.preview.emergentagent.com). Dashboard renders (28 orders, all cancelled from test seed cleanup — no live pending order to walk through admin-order-status-select UI; the SALES-18 allowed_transitions matrix was fully exercised via pytest on freshly created order across pending→paid→packed→shipped→completed).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter49_features.py",
+    "/app/test_reports/pytest/iter49.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/vouchers.evaluate_voucher: SALES-11 correctly blocks guest when per_user_limit>0 with reason 'Masuk ke akun untuk memakai voucher ini' BEFORE checking redemptions — matches spec, avoids DB probe for anonymous.",
+    "routers/vouchers.validate_voucher: SALES-12 hardening confirmed — user_id derived solely from session; payload.user_id is documented as ignored and empirically unused (guest with spoofed user_id still returns 'Masuk ke akun...').",
+    "routers/admin_orders._with_allowed: correctly excludes 'paid' from allowed_transitions for non-COD unless payment_status=='lunas' (defends BUG-SALES-03). Returned on GET, PUT/status, PUT/shipment — consistent.",
+    "routers/admin_orders.update_shipment: audit meta now includes both {from,to} with courier+tracking_number — good traceability (addresses the iteration_48 review comment).",
+    "services/admin_stats: MongoDB aggregation via $group with $toLong safe-cast — no in-memory scan of all orders. paid_revenue = Σ(paid_amount - refunded_amount) across ALL statuses (including cancelled with partial refund), which is the correct 'net collected' metric.",
+    "services/backup_auto: KEEP_AUTO=14 enforced via find({created_by:'system-cron'}).sort(-created_at).skip(14) + delete — manual backups untouched. Verified count <=14 after cron trigger.",
+    "routers/cron._authorized: uses hmac.compare_digest (constant-time) — good against timing attacks.",
+    "services/audit.log_action uses field name 'entity_id' (not 'target_id') — anyone querying audit_logs must use entity_id."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter49_features.py (new — 14 tests covering SALES-11/12/18/20 + daily backup cron + courier URL constants)"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 iter49 + 23/23 regression sales+email, 1 pre-existing COD skip = 37 passed / 1 skipped)",
+    "frontend": "Verified: a11y aria-labels present on contact/footer-newsletter/login/register inputs; admin login + dashboard render; /admin/pesanan list loads; /api/admin/crm/segments returns proper shape. Full E2E admin-order-status-select walkthrough not exercised in UI because seed data currently has no non-cancelled orders (only 28 cancelled test orders remain post-cleanup); backend allowed_transitions matrix fully verified in pytest across all 5 lifecycle states."
+  },
+  "test_credentials": "admin@collectorparfum.id / Admin#2026 ; customer@collectorparfum.id / Customer#2026 ; CRON secret = WEBHOOK_CRON_SECRET in /app/backend/.env",
+  "seed_data_creation": "Each pytest test creates fresh order(s), cleans up in finally: orders + analytics_events + email_logs + payment_transactions + audit_logs (by entity_id) all removed. Daily-backup test does NOT delete cron-created backups (retention logic itself keeps count <=14).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Reuse /app/backend/tests/test_iter49_features.py for regression on: voucher gating (SALES-11/12), allowed_transitions (SALES-18), dashboard/CRM aggregation (SALES-20), daily-backup cron. Note: audit_logs field is 'entity_id' not 'target_id'. mock-pay endpoint requires prior /orders/{code}/pay to create the midtrans txn (else 404 'Simulasi tidak tersedia'). Body must include {outcome:'settlement'|'expire'|'deny'}. The test seed currently shows 28 cancelled test orders in dashboard — main agent may want to prune (db.orders.deleteMany({status:'cancelled', created_at:{$lt:...}})) but it's not blocking.",
+  "rca of the issue": "N/A — all iter49 features passed on first properly-parameterised test run. Two initial test failures during authoring were self-inflicted (missing {outcome} body on mock-pay, and missing prior /orders/{code}/pay call to establish midtrans txn) — fixed in the test file; no product bugs."
+}

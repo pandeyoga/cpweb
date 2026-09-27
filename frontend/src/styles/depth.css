@@ -1,0 +1,112 @@
+/* Depth pass — grain, washes ambient, aksen tipografi, kartu berlapis (palet tetap). */
+
+/* Grain halus di seluruh storefront (tak menangkap klik). */
+[data-testid="storefront-shell"]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+}
+html.cp-dark [data-testid="storefront-shell"]::after { mix-blend-mode: screen; opacity: 0.05; }
+
+.cp-grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/></filter><rect width='120' height='120' filter='url(%23g)' opacity='0.35'/></svg>");
+  mix-blend-mode: soft-light;
+}
+
+/* Wash ambient keemasan untuk section beranda. */
+.cp-ambient {
+  background:
+    radial-gradient(900px 480px at 8% 0%, rgba(214, 195, 163, 0.30), transparent 60%),
+    radial-gradient(700px 420px at 96% 100%, rgba(184, 155, 106, 0.18), transparent 62%),
+    linear-gradient(180deg, var(--cp-paper-warm) 0%, var(--cp-paper) 100%);
+}
+html.cp-dark .cp-ambient {
+  background:
+    radial-gradient(900px 480px at 8% 0%, rgba(214, 195, 163, 0.10), transparent 60%),
+    radial-gradient(700px 420px at 96% 100%, rgba(184, 155, 106, 0.08), transparent 62%),
+    var(--cp-night);
+}
+
+/* Aksen judul: serif miring keemasan. */
+.cp-accent, .cp-headline em {
+  font-family: 'DM Serif Display', serif;
+  font-style: italic;
+  color: var(--cp-brass);
+  background: linear-gradient(120deg, #9a7a34 0%, #cdb47e 45%, #9a7a34 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-right: 0.06em;
+}
+
+/* Eyebrow dengan garis emas pembuka. */
+.cp-eyebrow-line { display: inline-flex; align-items: center; gap: 0.75rem; }
+.cp-eyebrow-line::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cp-brass), transparent);
+}
+
+[data-testid="home-page"] .cp-eyebrow:not(:has(svg)) { display: inline-flex; align-items: center; gap: 0.75rem; }
+[data-testid="home-page"] .cp-eyebrow:not(:has(svg))::before {
+  content: '';
+  width: 28px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cp-brass), transparent);
+}
+
+/* Tipografi outline raksasa (kata latar & angka ranking). */
+.cp-outline-text { color: transparent; -webkit-text-stroke: 1px rgba(20, 20, 20, 0.09); }
+.cp-outline-num {
+  color: var(--cp-paper);
+  -webkit-text-stroke: 1.5px rgba(154, 122, 52, 0.55);
+  text-shadow: 0 18px 30px rgba(38, 28, 14, 0.12);
+}
+html.cp-dark .cp-outline-text { -webkit-text-stroke-color: rgba(255, 255, 255, 0.08); }
+html.cp-dark .cp-outline-num { color: var(--cp-night); }
+
+/* Kartu berlapis: hairline emas + bayangan dua lapis saat hover. */
+.cp-glass-hover:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 0 0 1px rgba(184, 155, 106, 0.28),
+    0 30px 60px -18px rgba(38, 28, 14, 0.26),
+    0 10px 22px -10px rgba(38, 28, 14, 0.14);
+}
+.cp-frame-shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), inset 0 -40px 60px -40px rgba(20, 20, 20, 0.28);
+}
+
+/* Kontras: glass di atas kertas krem kini punya hairline gelap tipis agar tak "hilang". */
+html:not(.cp-dark) .cp-glass { border-color: rgba(60, 45, 20, 0.12); }
+html:not(.cp-dark) .cp-glass-pill { border-color: rgba(60, 45, 20, 0.14); background: rgba(255, 253, 249, 0.82); }
+
+/* Kartu solid (discovery) — putih hangat, garis tegas, bayangan berlapis. */
+.cp-card-solid {
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
+  border: 1px solid rgba(60, 45, 20, 0.10);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 22px 44px -26px rgba(38, 28, 14, 0.38), 0 6px 14px -8px rgba(38, 28, 14, 0.12);
+  transition: transform 0.45s cubic-bezier(.22, 1, .36, 1), box-shadow 0.45s ease;
+}
+.cp-card-solid:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 1px rgba(184, 155, 106, 0.35), 0 34px 60px -26px rgba(38, 28, 14, 0.45);
+}
+html.cp-dark .cp-card-solid { background: #1f1c18; border-color: rgba(255, 255, 255, 0.08); }
+
+/* Filter toko: pilihan hasil pencarian facet. */
+.cp-option[data-active='true'] { background: rgba(184, 155, 106, 0.14); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-glass-hover:hover { transform: none; }
+}

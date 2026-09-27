@@ -1,0 +1,30 @@
+{
+  "summary": "E18 (Instant Search + CMS Revision Restore) tested end-to-end. Backend regression: 48/49 passed, 1 skipped (0 failures) across test_search_cms_e18.py (17), test_hardening_e17.py (14), test_catalog_v2.py (7), test_sales_flow.py (10 + 1 skip). Frontend: search drawer instant suggestions, term chips (Vanilla for 'vanil'), did-you-mean chip for 'nior'->'noir' (both in drawer and shop page), empty result ('zzqxw'), see-all navigation, shop active-filter-q chip and shop-did-you-mean chip all working. CMS revision restore fully verified on Hero section: two publishes recorded two revisions with correct 'N field berbeda' diff labels; Pratinjau loaded revision into draft with Publish/Buang controls visible; Pulihkan opened cms-restore-confirm dialog and successfully restored eyebrow field to original value with toast 'Dipulihkan ke revisi #1 ...'. Search aliases textarea (admin-settings-search-aliases) present on Pengaturan > Toko tab with helpful placeholder. Hero section state restored to original at end.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_search_cms_e18.py",
+    "/app/backend/tests/test_hardening_e17.py",
+    "/app/backend/tests/test_catalog_v2.py",
+    "/app/backend/tests/test_sales_flow.py",
+    "/app/test_reports/pytest/iter53_regression.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "content.py revision storage stores prev_data as revision (state BEFORE update) which is a sound rollback semantic; correctly gated by _revision_needed to prevent noise.",
+    "Search index has 30s in-memory cache invalidated on search_aliases save — verify no stale results between admin nodes in future multi-node deploys.",
+    "Frontend correctly wires shop-did-you-mean to router query update; consider debouncing search-input further for very slow networks (currently ~500ms works)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "Admin: admin@collectorparfum.id / Admin#2026; Customer: customer@collectorparfum.id / Customer#2026",
+  "seed_data_creation": "Created two temporary hero revisions during CMS test; restored eyebrow back to original 'Refill Perfume Distributor · Sejak 1970' at end. Two content_revisions rows remain in DB from the test (harmless — bounded by REV_MAX cap).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "E18 features (instant search suggest + fuzzy/DYM + admin search aliases + CMS revision history/preview/restore + revert-to-default) all working. Hero section was used for CMS revision test; final state restored. Two extra content_revisions may exist for 'hero' but are automatically capped by REV_MAX.",
+  "rca of the issue": "No issues found."
+}

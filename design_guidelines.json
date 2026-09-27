@@ -1,0 +1,116 @@
+{
+  "project": "Collector Parfum - Luxury Refill Perfume Shop",
+  "palette": {
+    "paper": "#f7f3ea",
+    "paper_warm": "#fffcf6",
+    "paper_fog": "#eee7dc",
+    "ink": "#141414",
+    "champagne": "#d6c3a3",
+    "brass": "#b89b6a",
+    "gold_deep": "#9a7a34",
+    "dark_bg": "#0f0e0c",
+    "dark_card": "#1a1815"
+  },
+  "typography": {
+    "headings": "DM Serif Display, serif (font-serif)",
+    "body": "Manrope, sans-serif (font-sans)",
+    "eyebrow_labels": "Azeret Mono, monospace (font-mono uppercase tracking-[0.2em])"
+  },
+  "depth_system": {
+    "grain_overlay": "pointer-events-none fixed inset-0 opacity-[0.035] mix-blend-overlay z-[99] bg-[url('data:image/svg+xml,...')]",
+    "layered_shadows": "shadow-[0_4px_20px_-2px_rgba(20,20,20,0.06),0_12px_36px_-6px_rgba(184,155,106,0.12)]",
+    "hover_lift": "hover:-translate-y-1.5 transition-all duration-300 ease-out hover:shadow-[0_12px_30px_-4px_rgba(20,20,20,0.12)]",
+    "section_wash": "bg-gradient-to-b from-transparent via-[var(--cp-paper-fog)]/30 to-transparent dark:via-white/[0.02]"
+  },
+  "section_1_discovery_hub": {
+    "title_proposal": "Eksplorasi Kurasi Aroma",
+    "eyebrow": "ARCHIVE EKSKLUSIF",
+    "subtitle": "Temukan wewangian impian berdasarkan Brand favorit, Karakter aroma, Pilihan Editor, atau Best Seller teratas.",
+    "selector_tabs": [
+      {
+        "id": "brand",
+        "label": "Brand",
+        "icon": "Building2"
+      },
+      {
+        "id": "character",
+        "label": "Character",
+        "icon": "Sparkles"
+      },
+      {
+        "id": "editor_picks",
+        "label": "Editor's Picks",
+        "icon": "Award"
+      },
+      {
+        "id": "best_seller",
+        "label": "Best Seller",
+        "icon": "TrendingUp"
+      }
+    ],
+    "tab_designs": {
+      "brand": {
+        "layout": "Search bar top + Horizontal slider of Brand Tiles",
+        "search_input": "Input field with Search icon, placeholder 'Cari dari 200+ Brand (e.g. Chanel, Creed, Le Labo)...'",
+        "card_style": "Bordered glass card with brand title, total product count badge (e.g. '18 Parfum'), and a mini 3-product thumbnail gallery or bottle art strip"
+      },
+      "character": {
+        "layout": "Search bar top + Horizontal slider of Scent Character Cards (~40 characters)",
+        "search_input": "Input field with Search icon, placeholder 'Cari Karakter (e.g. Elegant, Fresh, Masculine, Woody)...'",
+        "card_style": "Compact tactile card with Lucide icon in gold circle, Character Name, short mood description, product count, click action to filter shop"
+      },
+      "editor_picks": {
+        "layout": "Horizontal Embla slider of Editor Choice perfume cards",
+        "card_style": "Automatic top featured products with gold 'Kurasi Editor' floating badge, fragrance note breakdown (Top/Heart/Base), curator review quote, and direct 'Pilih Ukuran' CTA button"
+      },
+      "best_seller": {
+        "layout": "Horizontal slider of Ranked product cards",
+        "card_style": "Rank badge (#1, #2, #3 in gold metallic finish), sales metric label (e.g. 'Terjual 1.2k+ bulan ini'), star rating, and full ProductCard details"
+      }
+    }
+  },
+  "section_2_shop_filters": {
+    "sections_to_remove": ["Kisaran Harga (Price Range)", "Ukuran (Bottle Size)"],
+    "sections_to_keep_and_update": {
+      "kategori": "Checkbox list (Refill Parfum, Discovery Set, Perfume Oil, Atomizer)",
+      "brand": "Searchable combobox with real-time text filter (~200 brands). Selected brands displayed as removable golden chips",
+      "character": "Searchable combobox replacing chip grid (~40 characters). Users type to search and select characters with badge counter",
+      "momen": "Single segmented toggle for 'Day & Night' (replacing old 'Date Night' label)",
+      "tier": "Chip selector (CP01, CP02, CP03, EXCLUSIVE)",
+      "tipe": "Chip selector (Basic, Refine, Intense)",
+      "untuk": "Radio/Chip selector (Pria, Wanita, Unisex)"
+    }
+  },
+  "section_3_global_depth_and_polish": {
+    "cards": "Subtle 1px border border-[var(--cp-champagne)]/40 with soft backdrop blur and ambient shadow. Rounded-xl or rounded-2xl",
+    "buttons": "Primary CTA uses gold liquid shimmer hover effect (`.cp-btn-gold`), rounded-full with subtle press down active state (`active:scale-[0.98]`)",
+    "animations": "Framer Motion layout animations on tab switch (`layoutId='activeTab'`), slide-in fade effects (`initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}`)",
+    "micro_interactions": "Icon rotation on hover, scale-105 image zooms inside overflow-hidden card frames"
+  },
+  "image_urls": [
+    {
+      "category": "Perfume Bottle Aesthetic",
+      "url": "https://images.unsplash.com/photo-1458538977777-0549b2370168?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNTl8MHwxfHNlYXJjaHwyfHxsdXh1cnklMjBwZXJmdW1lJTIwYm90dGxlJTIwYWVzdGhldGljfGVufDB8fHx8MTc5MDUwNDM1OXww&ixlib=rb-4.1.0&q=85",
+      "description": "Clear perfume bottle on minimalist background"
+    },
+    {
+      "category": "Gold Aesthetic Bottle",
+      "url": "https://images.unsplash.com/photo-1622618991746-fe6004db3a47?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNTl8MHwxfHNlYXJjaHwxfHxsdXh1cnklMjBwZXJmdW1lJTIwYm90dGxlJTIwYWVzdGhldGljfGVufDB8fHx8MTc5MDUwNDM1OXww&ixlib=rb-4.1.0&q=85",
+      "description": "Luxury perfume bottle on warm amber backdrop"
+    }
+  ],
+  "testing_guidelines": {
+    "rule": "Every interactive element must include explicit kebab-case data-testid attributes.",
+    "examples": [
+      "data-testid='discovery-tab-brand'",
+      "data-testid='discovery-tab-character'",
+      "data-testid='discovery-tab-editor-picks'",
+      "data-testid='discovery-tab-best-seller'",
+      "data-testid='brand-search-input'",
+      "data-testid='character-search-input'",
+      "data-testid='momen-day-night-toggle'",
+      "data-testid='filter-brand-combobox'",
+      "data-testid='filter-character-combobox'"
+    ]
+  }
+}

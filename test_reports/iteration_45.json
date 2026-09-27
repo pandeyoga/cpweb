@@ -1,0 +1,30 @@
+{
+  "summary": "Full backend + frontend regression on 5 BUG-SALES critical fixes (guest token, concurrent cancel, manual paid, overpay, customer cancel). Created pytest /app/backend/tests/test_sales_flow.py — 11/11 PASS. Existing /app/scripts/repro_sales_flow.py — 6/6 PASS. Frontend Playwright verified: guest checkout redirect to /pesanan-sukses?code=&t= renders order-success-code + order-success-total, wrong ?t= shows notfound branch with code echoed, reload without params rehydrates from localStorage cp:lastOrderCode+Token, guest sees no order-proof-form while logged-in owner does, admin order detail for pending unpaid transfer HIDES 'Dibayar' option (nextOptions=[]), account /akun shows 'Batalkan' only on pending row (1 of 5 test orders). Test data cleaned up (2 orders cancelled).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_sales_flow.py",
+    "/app/test_reports/pytest/sales_flow.xml",
+    "/app/scripts/repro_sales_flow.py"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/orders.record_payment: overpay guard uses `$lte total` with atomic $inc — correct (BUG-SALES-04). derive_payment_status is always applied after mutation (INV-5).",
+    "services/orders.transition_order: compare-and-set on {code, status:frm} correctly makes concurrent admin cancels idempotent — only one modified_count==1 wins; others get InvalidTransition→400 (BUG-SALES-02).",
+    "services/orders.transition_order: 'paid' guard `not is_cod and derive_payment_status != lunas → InvalidTransition' correctly blocks BUG-SALES-03; COD path unrestricted for manual paid.",
+    "services/payments.verify_proof: on OrderError during record_payment, proof is REVERTED to pending (nice recovery for BUG-SALES-04 second-verify race).",
+    "services/orders.get_order_for_user: uses secrets.compare_digest for guest access_token — timing-safe. Owner-only fallthrough for logged-in orders — IDOR-safe.",
+    "routers/orders.cancel_order: pending-only guard is enforced at router-level (returns 400 with clear message for BUG-SALES-05).",
+    "frontend AdminOrderDetailPage: allowed = LEGAL_TRANSITIONS[status].filter(s => s !== 'paid' || cod || lunas) — mirrors backend guard. When nextOptions is empty, the status Select is not rendered, so 'Dibayar' cannot be picked for unpaid transfer.",
+    "frontend OrderSuccessPage: localStorage rehydration correctly reads cp:lastOrderToken only when the stored code matches the requested code (avoids leaking tokens across codes).",
+    "Minor observation: /app/backend/tests/test_sales_flow.py currently needs `-o addopts=` to bypass the xdist default `-n auto` (rootdir pytest.ini). Not a bug — just documented in context."
+  ],
+  "updated_files": ["/app/backend/tests/test_sales_flow.py"],
+  "success_rate": {"backend": "100% (11/11 new pytest + 6/6 repro)", "frontend": "100% (all listed flows verified)"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026 and customer@collectorparfum.id / Customer#2026 (from /app/memory/test_credentials.md — both work).",
+  "seed_data_creation": "Created 2 test orders during frontend automation (CP00000045 guest transfer, CP00000046 customer transfer). Both cancelled via admin at end of run — stock restored.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend regression at /app/backend/tests/test_sales_flow.py (pytest, run with `-o addopts=` to skip xdist). Covers all 5 BUG-SALES plus edges: (01) wrong-token→404, other-user→404; (02) 1 winner + 4×400 on 5 parallel cancels; (03) COD manual pending→paid still allowed; (04) two full proofs — verify1=lunas, verify2=400+revert; partial DP half+rest→lunas; (05) pending cancel ok, paid cancel 400. Frontend testids used: order-success-code, order-success-total, order-success-notfound, order-proof-form, admin-order-status-select, account-order-cancel-button, checkout-change-address-button, address-input-*, address-save-button, admin-login-*.",
+  "rca of the issue": "No functional issues found. All 5 fixes implemented correctly (SSOT: transition_order compare-and-set, record_payment $lte-guarded $inc, get_order_for_user token check, cancel pending-only, admin filter for 'paid'). Frontend mirrors backend guards (nextOptions filter, CANCELLABLE list, PaymentPanel hides form for guests). Guest checkout end-to-end verified with real order via API + browser render."
+}

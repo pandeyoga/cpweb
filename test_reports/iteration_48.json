@@ -1,0 +1,33 @@
+{
+  "summary": "E16 (shipment: kurir + resi + email 'Pesanan Dikirim'/'Pembaruan Resi') end-to-end verified. Backend: 15/15 new tests pass in /app/backend/tests/test_shipment_e16.py covering (a) GET /api/admin/couriers returns exactly {jne,jnt,sicepat,anteraja,lainnya} for admin, 401/403 for anon/customer; (b) PUT /api/admin/orders/{code}/status shipped requires courier+tracking (400 'Nomor resi wajib' when missing; 400 for resi <6 chars, symbols like ABC@#123$, invalid courier 'bogus') and in all failure cases the order status remains 'packed'; (c) happy path with {courier:'jnt', tracking_number:'JP 1234 5678 90'} → 200, status shipped, shipment {courier:'jnt', courier_name:'J&T Express', tracking_number:'JP1234567890' (spaces stripped), tracking_url:'https://jet.co.id/track', shipped_at ISO}; DB confirms; exactly one email_logs kind='shipped', status='mocked', subject 'Pesanan {code} sedang dikirim', html contains resi, courier name, tracking_url, '/pesanan-sukses?code=..&t=..' link; (d) PUT /api/admin/orders/{code}/shipment: same values → no new email; changed resi → new email_logs kind='shipped_update' (subject 'Pembaruan resi — Pesanan {code}') exactly once; changed courier also yields shipped_update; (e) courier 'lainnya' produces tracking_url = https://cekresi.com/?noresi=<resi>; (f) update_shipment on non-shipped order → 400; (g) shipment update auth: 401/403 for anon/customer. Regression: test_email_notify_e15.py + test_sales_flow.py still 23 passed / 1 skipped (COD pre-existing). Frontend admin flow verified via Playwright at REACT_APP_BACKEND_URL=https://payment-flow-test-49.preview.emergentagent.com: admin logged in, /admin/pesanan/{code} loaded, admin-order-status-select opened, Dikirim option triggered admin-ship-dialog with 'JNE' preselected from order.shipping_id 'jne-reg'; typing 'ABC12' shows admin-ship-resi-error and disables admin-ship-submit; valid 'JNE9999888' submitted → admin-order-shipment card visible with admin-order-tracking-number 'JNE9999888' and admin-order-tracking-link href 'https://www.jne.co.id/tracking-package'; admin-order-edit-resi opened edit-mode dialog, updated to 'JNE7777666', tracking number card refreshed. /admin/pembayaran → admin-email-logs shows both 'Pesanan Dikirim' and 'Pembaruan Resi' rows. Customer /pesanan-sukses?code=CP00000401&t=... shows hero 'PESANAN DIKIRIM — Dalam perjalanan.', order-shipment-info block with order-tracking-number 'JNE7777666' + order-tracking-link href jne.co.id target=_blank, and mobile viewport (390x844) still renders the shipment info block correctly.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_shipment_e16.py",
+    "/app/test_reports/pytest/e16_results.xml",
+    "/app/test_reports/pytest/e16_full_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "services/shipment.py: _build validates courier+resi BEFORE calling orders_svc.transition_order — good ordering guarantees status stays 'packed' on invalid input (verified by 4 tests).",
+    "services/shipment.py._RESI regex ^[A-Za-z0-9-]{6,40}$ + spaces stripped via re.sub — matches spec (validated: 'JP 1234 5678 90' → 'JP1234567890'; 'ABC@#123$' rejected).",
+    "services/notify.py.send_shipped: idempotency key `shipped:{courier}:{tracking_number}` via _claim compare-and-set on emails_sent — re-saving same courier+resi is a no-op, changing either fires a new email. Correction detection uses `first = not any(k.startswith('shipped:') ...)` → subject/heading branches correctly.",
+    "COURIERS list uses courier `lainnya` with url=None → falls back to FALLBACK_URL 'https://cekresi.com/?noresi={resi}' with urllib.parse.quote on the resi — safe encoding.",
+    "admin_schemas.OrderStatusInput: courier/tracking_number are Optional (both applied only for shipped) — router branches to shipment_svc.ship_order which enforces presence via ShipmentError. Non-shipped transitions ignore these fields silently — acceptable.",
+    "routers/admin_orders.update_shipment: audit log uses tracking_number only (no old resi captured) — consider logging {'from': old_tn, 'to': new_tn, 'courier': courier} for better traceability if you ever need to reconstruct correction history."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_shipment_e16.py (new)"
+  ],
+  "success_rate": {"backend": "100% (15/15 E16 + 13/13 E15 + 10/10 sales, 1 pre-existing COD skip = 38 passed / 1 skipped)", "frontend": "100% observed (admin ship dialog, courier preselect, resi validation, submit, edit-resi, admin-email-logs both kinds, customer /pesanan-sukses shipment block, mobile viewport)"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026 ; customer@collectorparfum.id / Customer#2026 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Test order CP00000401 (Noir Oud Intense) was created for UI walkthrough and cleaned from orders/email_logs/payment_transactions/analytics_events collections after tests. All pytest test data cleaned via finally blocks (_cleanup helper).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "E16 pipeline is solid in mock mode. Reuse /app/backend/tests/test_shipment_e16.py for regressions. The helper _create_paid_packed(pid, sku, admin_h) is a reusable pattern for any future test that needs a packed order (create → pay → mock-pay settlement → admin PUT status=packed). Frontend note: the customer OrderSuccessPage hero heading uses CSS text-transform:uppercase so grepping DOM inner_text may return 'PESANAN DIKIRIM' (uppercase) instead of 'Pesanan Dikirim' — use case-insensitive matching in future assertions. Non-blocking: the Radix DialogContent aria-describedby warning noted in iteration_47 also applies to the new ShipDialog — but ShipDialog DOES include <DialogDescription>, so it's already compliant.",
+  "rca of the issue": "N/A — no bugs found for E16."
+}

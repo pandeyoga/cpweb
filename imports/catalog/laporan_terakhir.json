@@ -1,0 +1,30 @@
+{
+  "at": "2026-09-27T04:49:56.824368+00:00",
+  "applied": true,
+  "summary": {
+    "rows": 9639,
+    "products": 1071,
+    "errors": 0,
+    "warnings": 0,
+    "price_matrix_filled": "36/36",
+    "active": 1071,
+    "archived_no_price_or_stock": 0,
+    "tiers": {
+      "CP02": 417,
+      "CP01": 532,
+      "CP03": 107,
+      "EXCLUSIVE": 15
+    },
+    "date_night": 682
+  },
+  "result": {
+    "replaced": 1071,
+    "inserted": 0,
+    "deleted_old": 0,
+    "archived_old_ordered": 1,
+    "new_characters": [],
+    "occasions_hidden": 0
+  },
+  "errors": [],
+  "warnings": []
+}

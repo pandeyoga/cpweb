@@ -1,0 +1,18 @@
+{
+  "summary": "IA restructure frontend-only test. All 9 scenarios pass: sidebar groups/items order, collapsible groups with localStorage persistence and auto-expand when active, nav-count badges (orders_to_process=1 on CP00000133), breadcrumbs for 17 pages incl subpages (Impor / Ekspor, Produk Baru, Edit Produk, order detail with parent link), /admin/crm redirect, Pelanggan tabs + users table, dedicated /admin/log-email page, no email log card on /admin/pembayaran, Settings has 4 tabs (Toko/Kurir/Pembayaran/Integrasi & SEO), Produk Import button navigates to /admin/produk/impor, mobile sheet nav with grouped items + badges + no horizontal overflow, order detail status select present. Also validated backend nav-counts endpoint: 200 for admin (returns {orders_to_process:1, proofs_pending:0, reviews_pending:0}), 401 unauth, 403 for customer.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Only the 'Integrasi & SEO' settings tab has a data-testid (admin-settings-tab-growth). Consider adding data-testids to the other 3 tab triggers (toko/kurir/bayar) for future automation coverage — non-blocking."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026, customer@collectorparfum.id / Customer#2026",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Admin IA restructure is complete and stable. Sidebar collapse persists via localStorage key cp:admin-nav-collapsed:v1. Nav counts endpoint /api/admin/nav-counts is polled every 60s. Order CP00000133 is in 'Dikemas' status and drives orders_to_process badge=1. Redirect /admin/crm -> /admin/pelanggan works. All 17 breadcrumb mappings + subpage parent links verified.",
+  "rca of the issue": "N/A — no issues found."
+}
