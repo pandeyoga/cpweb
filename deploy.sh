@@ -264,10 +264,11 @@ ok "Dependency Python terpasang"
 # ============================================================================
 log "STEP 7/${TOTAL_STEPS} — Tulis backend/.env"
 # Secret cron dipertahankan antar-deploy (dibuat sekali bila belum ada).
-CRON_SECRET="$(grep -s '^WEBHOOK_CRON_SECRET=' "${BACKEND_DIR}/.env" | cut -d= -f2-)"
+# `|| true`: key belum ada di .env lama BUKAN error (tanpa ini set -e + pipefail menghentikan skrip diam-diam).
+CRON_SECRET="$(grep -s '^WEBHOOK_CRON_SECRET=' "${BACKEND_DIR}/.env" | cut -d= -f2- || true)"
 [[ -z "${CRON_SECRET}" ]] && CRON_SECRET="$(openssl rand -hex 32)"
 # Key Midtrans: env saat deploy > nilai lama di .env (tak hilang saat redeploy).
-_keep () { grep -s "^$1=" "${BACKEND_DIR}/.env" | cut -d= -f2-; }
+_keep () { grep -s "^$1=" "${BACKEND_DIR}/.env" | tail -1 | cut -d= -f2- || true; }
 MIDTRANS_SERVER_KEY="${MIDTRANS_SERVER_KEY:-$(_keep MIDTRANS_SERVER_KEY)}"
 MIDTRANS_CLIENT_KEY="${MIDTRANS_CLIENT_KEY:-$(_keep MIDTRANS_CLIENT_KEY)}"
 MIDTRANS_IS_PRODUCTION="${MIDTRANS_IS_PRODUCTION:-$(_keep MIDTRANS_IS_PRODUCTION)}"

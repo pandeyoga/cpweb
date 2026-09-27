@@ -38,7 +38,7 @@ confirm() { [[ "${ASSUME_YES:-0}" == "1" ]] && return 0; read -r -p "$1 [y/N] " 
 [[ -d "${APP_DIR}/.git" ]] || die "Aplikasi tidak ditemukan di ${APP_DIR}. Untuk VPS baru pakai deploy.sh."
 [[ -f "${APP_DIR}/backend/.env" ]] || die "${APP_DIR}/backend/.env tidak ada."
 
-env_get() { grep -E "^$1=" "${APP_DIR}/backend/.env" | tail -1 | cut -d= -f2- | tr -d '"'; }
+env_get() { grep -E "^$1=" "${APP_DIR}/backend/.env" | tail -1 | cut -d= -f2- | tr -d '"' || true; }
 MONGO_URL="$(env_get MONGO_URL)"; DB_NAME="$(env_get DB_NAME)"
 [[ -n "${MONGO_URL}" && -n "${DB_NAME}" ]] || die "MONGO_URL/DB_NAME kosong di backend/.env"
 
@@ -96,7 +96,7 @@ fi
 [[ ${RC} -eq 0 ]] || die "replace_catalog.py gagal (kode ${RC})."
 
 supervisorctl restart "${APP_NAME}-backend" >/dev/null && ok "Backend di-restart (indeks pencarian dimuat ulang)"
-PORT="$(grep -oE '127\.0\.0\.1:[0-9]+' "/etc/supervisor/conf.d/${APP_NAME}-backend.conf" 2>/dev/null | head -1 | cut -d: -f2)"
+PORT="$(grep -oE '127\.0\.0\.1:[0-9]+' "/etc/supervisor/conf.d/${APP_NAME}-backend.conf" 2>/dev/null | head -1 | cut -d: -f2 || true)"
 PORT="${PORT:-8003}"
 for _ in $(seq 1 20); do curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1 && break; sleep 2; done
 TOTAL="$(curl -fsSI "http://127.0.0.1:${PORT}/api/products?limit=1" 2>/dev/null | grep -i x-total-count | tr -dc '0-9')"
