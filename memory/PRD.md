@@ -194,3 +194,9 @@ block `collector-parfum`, Certbot webroot), dokumentasi `DEPLOYMENT_VPS.md`.
 ## 2026-09 — CMS Trust Strip / Marquee / Announcement (iteration_57 100%)
 - Trust Strip: per item judul, deskripsi, ikon (19 pilihan), ikon gambar/SVG, tautan; tambah/hapus/geser (grid 1–4 kolom).
 - Marquee (kata berjalan): kecepatan, gaya warna (terang/gelap/emas), pemisah teks atau gambar/SVG. Announcement: kecepatan + pemisah.
+
+## 2026-09-27 (sesi lanjutan) — Restore repo + verifikasi CMS Trust/Marquee/Announcement
+- Repo di-restore dari github.com/pandeyoga/cpweb ke /app (env preview dipertahankan; env backend diisi ulang: PAYMENT_DEADLINE_HOURS, WEBHOOK_CRON_SECRET, PUBLIC_SITE_URL, MIDTRANS_MOCK=true, EMAIL_MOCK=true, SMTP_FROM_*). seed_data.py dijalankan.
+- Testing agent iteration_58: CMS Trust Strip / Marquee / Announcement diuji LEWAT UI admin (edit → Publish → beranda berubah) + 7/7 pytest; konten dikembalikan ke default.
+- FIX: GET /api/reviews 500 (services.catalog.list_reviews hilang) → ditambahkan, hanya ulasan `published`.
+- Backlog tetap: key Midtrans Sandbox, SMTP fastcloud.id, DNS domain (MOCK saat ini).

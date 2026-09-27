@@ -202,3 +202,9 @@ async def list_brands(db):
     # urutan manual (order > 0) dulu, lalu jumlah produk terbanyak
     out.sort(key=lambda b: (b["order"] <= 0, b["order"], -b["count"], b["name"].lower()))
     return out
+
+
+async def list_reviews(db, product_id=None):
+    """Ulasan publik: hanya status `published` (terbaru dulu)."""
+    from services.admin_reviews import list_reviews as _list
+    return await _list(db, status="published", product_id=product_id)

@@ -1,0 +1,39 @@
+{
+  "summary": "Iter58 re-verified Trust Strip / Marquee (kata berjalan) / Announcement Bar CMS on RESTORED environment. Backend: 7/7 pytest passed against public URL (backend/tests/test_iter57_trust_marquee_announcement.py). Public GET /api/content returns registry defaults (trust: Sejak 1970 award /tentang, Biang Impor Pilihan shield-check, 3 Cabang di Bandung map-pin /lokasi; marquee_words items ELEGAN..; announcement items). PUT + revert cycle validated. Frontend UI (NEW coverage vs iter57): logged in as admin via /admin (data-testid admin-login-*), navigated to /admin/konten, edited each section THROUGH THE UI FORM EDITOR (not API): (1) Trust: changed item[0] title -> 'UI_TEST_TRUST_A' and icon select -> 'flame', clicked Publish; homepage [data-testid=trust-strip] rendered new title within seconds. cms-rep-add-items button present. (2) Marquee (marquee_words): changed items[0] via cms-list-items-0 -> 'UI_MARQ_TEST', speed=fast, style=dark, Publish; /marquee-strip on homepage contained 'UI_MARQ_TEST'. (3) Announcement: items[0] -> 'UI_ANN_TEST', speed=slow, Publish; [data-testid=announcement-bar] on homepage contained 'UI_ANN_TEST' and .cp-marquee-track class contained 'slow'. All 3 sections reverted via POST /api/admin/content/{key}/revert to_default=true afterwards; /api/content final state confirms defaults restored. Non-admin PUT still 401/403.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/catalog/products/{id}/reviews (routers/catalog.py:127)", "issue": "500 AttributeError: module 'services.catalog' has no attribute 'list_reviews'. Seen repeatedly in backend logs while browsing storefront / product pages. Function exists in services.admin_reviews and services.stores (list_reviews_admin) but not exposed as services.catalog.list_reviews. Not part of CMS scope but visible as console 500s on frontend. Fix: import/rebind in services/catalog.py or update router to call services.admin_reviews.list_reviews."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "TrustStrip (components/layout/AnnouncementBar.js)", "issues": ["Rekomendasi lama dari iter57 masih berlaku: TRUST_DEFAULT / ANNOUNCE_DEFAULT hardcoded fallback tidak sinkron dengan registry default. Bila ContentContext lambat hydrate, pengguna melihat teks fallback berbeda sesaat (flicker). Non-blocking."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter57_trust_marquee_announcement.py",
+    "/app/test_reports/pytest/iter58.xml"
+  ],
+  "action_items": [
+    "(minor, out-of-scope) Fix services.catalog.list_reviews AttributeError producing 500 on catalog reviews endpoint.",
+    "(optional) Selaraskan TRUST_DEFAULT/ANNOUNCE_DEFAULT fallback frontend dengan registry default untuk hilangkan flicker."
+  ],
+  "critical_code_review_comments": [
+    "ContentForm.RepeaterField uses same data-testid `cms-field-{sub-field-name}` for each row's Scalar input; unique-per-row testids (mis. `cms-field-{field}-{i}-{sub}`) akan menyederhanakan automasi. Saat ini terpaksa pakai .first / .nth().",
+    "AdminContentPage layout, live preview iframe (postMessage CMS_DRAFT), history/revert, dan Publish flow bekerja end-to-end via UI.",
+    "TrustStrip menghasilkan grid 4-kolom untuk >=4 items (verified via iter57); saat ini default 3 item -> sm:grid-cols-3.",
+    "Marquee: .cp-marquee-track menerima kelas slow/fast sesuai prop speed (verified 'slow' pada announcement).",
+    "Endpoint /api/admin/content/{key}/revert body {to_default:true} bekerja untuk trust, marquee_words, dan announcement — konten kembali persis ke registry default."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (7/7 pytest)", "frontend": "100% (3/3 CMS UI edits + homepage verify)"},
+  "test_credentials": "admin@collectorparfum.id / Admin#2026",
+  "seed_data_creation": "Temporary CMS overrides via UI Publish untuk trust/marquee_words/announcement; semua sudah di-revert via POST /revert to_default=true di akhir testing. /api/content final = defaults registry.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Route CMS: /admin/konten. TestIds: cms-section-<key>, cms-field-<name> (duplikat pada sub-field repeater — pakai .nth/.first), cms-list-<field>-<i>, cms-rep-row-<field>-<i>, cms-rep-add-<field>, tombol Publish via get_by_role('button', name='Publish'). Storefront: [data-testid=trust-strip], trust-item-<i>, trust-icon-image, announcement-bar, marquee-strip, .cp-marquee-track (slow|fast). Public GET /api/content memantulkan perubahan tanpa cache. Login response field: `token`.",
+  "rca of the issue": "N/A — semua fungsi CMS untuk trust/marquee/announcement bekerja via UI editor + public storefront rendering; revert to_default=true mengembalikan ke registry defaults. Console 500 di storefront berasal dari services.catalog.list_reviews yang belum ada (di luar scope iterasi ini, dilaporkan sebagai minor)."
+}
