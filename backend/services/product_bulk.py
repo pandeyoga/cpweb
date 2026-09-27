@@ -210,8 +210,8 @@ def _payload(prod):
     }
     if prod.get("tier"):
         payload["tier"] = prod["tier"]
-    if "date_night" in prod:
-        payload["date_night"] = bool(prod["date_night"])
+    if "day_night" in prod:
+        payload["day_night"] = prod["day_night"]
     if prod.get("characters"):
         payload["characters"] = prod["characters"]
     return payload

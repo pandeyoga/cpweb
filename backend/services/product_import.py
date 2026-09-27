@@ -15,6 +15,7 @@ import difflib
 import re
 from typing import Dict, List, Optional
 
+from core_utils import normalize_day_night
 from services.product_io import (
     OPTION_SLOTS, norm_gender, norm_status, parse_bool, parse_list,
     parse_ml, parse_money, parse_int, slugify,
@@ -29,7 +30,7 @@ def _is_size_name(name) -> bool:
 
 
 TIERS = ("CP01", "CP02", "CP03", "EXCLUSIVE")  # kolom tingkat produk wajib sama per slug (v2)
-PRODUCT_LEVEL_FIELDS = ("name", "brand", "category", "gender", "tier", "date_night", "description",
+PRODUCT_LEVEL_FIELDS = ("name", "brand", "category", "gender", "tier", "day_night", "description",
                         "tags", "characters", "best_seller", "is_new", "status", "images", "video_url")
 
 
@@ -40,7 +41,7 @@ CANONICAL_SPEC: Dict[str, List[str]] = {
     "brand": ["brand", "merek", "merk"],
     "category": ["category", "kategori", "categoryslug", "kat", "koleksi", "collection"],
     "tier": ["tier", "tingkat", "kelas", "grade"],
-    "date_night": ["datenight", "kencan", "romantis"],
+    "day_night": ["daynight", "siangmalam", "waktupakai", "momen", "datenight"],
     "gender": ["gender", "jeniskelamin", "untuk", "targetgender"],
     "description": ["description", "deskripsi", "desc", "keterangan", "detail"],
     "tags": ["tags", "tag", "label", "keywords"],
@@ -159,7 +160,7 @@ def build_row(row: dict, mapping: Dict[str, Optional[str]]) -> dict:
         "category": str(_get(row, mapping, "category", "")).strip(),
         "gender": norm_gender(_get(row, mapping, "gender", "")),
         "tier": str(_get(row, mapping, "tier", "")).strip().upper(),
-        "date_night": parse_bool(_get(row, mapping, "date_night", "")),
+        "day_night": normalize_day_night(_get(row, mapping, "day_night", "")),
         "description": str(_get(row, mapping, "description", "")).strip(),
         "tags": parse_list(_get(row, mapping, "tags", "")),
         "characters": parse_list(_get(row, mapping, "characters", "")),
@@ -283,7 +284,7 @@ def validate_and_group(rows: List[dict], mapping: Dict[str, Optional[str]], cate
             products[pkey] = {
                 "slug": r["slug"] or None,
                 "name": r["name"], "brand": r["brand"], "category": r["category"],
-                "gender": r["gender"], "tier": (r["tier"] or None), "date_night": r["date_night"],
+                "gender": r["gender"], "tier": (r["tier"] or None), "day_night": r["day_night"],
                 "description": r["description"],
                 "tags": r["tags"], "best_seller": r["best_seller"], "is_new": r["is_new"],
                 "characters": r["characters"],

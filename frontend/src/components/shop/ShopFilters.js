@@ -11,11 +11,17 @@
 // UX: tiap section bisa dibuka/tutup, status diingat di localStorage, section ber-filter aktif
 // otomatis terbuka. Brand & Character (banyak nilai) memakai pencarian, bukan deretan tombol.
 import React from 'react';
-import { Check, ChevronDown, RotateCcw, SlidersHorizontal, SunMoon } from 'lucide-react';
+import { Check, ChevronDown, Moon, RotateCcw, SlidersHorizontal, Sun } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
 import { FacetSearch } from './FacetSearch';
 
 const OPEN_KEY = 'cp:shop-filter-sections:v3';
+
+// Produk "Day/Night" ikut tampil di kedua filter (disaring di server).
+const MOMENTS = [
+  { id: 'day', label: 'Day', hint: 'Siang hari', Icon: Sun },
+  { id: 'night', label: 'Night', hint: 'Malam hari', Icon: Moon },
+];
 
 const DEFAULT_OPEN = {
   kategori: true,
@@ -213,26 +219,29 @@ export const ShopFilters = ({
       </Section>
 
       <Section id="datenight" title="Momen" count={counts.datenight} open={open.datenight} onOpenChange={setSection('datenight')}>
-        <button
-          type="button"
-          onClick={() => onToggle('occasion', 'date-night')}
-          aria-pressed={occ.includes('date-night')}
-          data-testid="shop-filter-day-night"
-          className={`w-full flex items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left transition-colors ${
-            occ.includes('date-night')
-              ? 'bg-[color:var(--cp-ink)] text-[color:var(--cp-paper)] border-[color:var(--cp-ink)]'
-              : 'border-black/12 hover:bg-black/5'
-          }`}
-        >
-          <SunMoon className="h-4 w-4 shrink-0" strokeWidth={1.6} />
-          <span className="flex-1">
-            <span className="block text-[12.5px] font-medium">Day &amp; Night</span>
-            <span className={`block text-[10.5px] ${occ.includes('date-night') ? 'opacity-70' : 'text-black/50'}`}>Nyaman siang hingga malam</span>
-          </span>
-          <span className={`h-4 w-7 rounded-full p-0.5 transition-colors ${occ.includes('date-night') ? 'bg-[color:var(--cp-brass)]' : 'bg-black/15'}`}>
-            <span className={`block h-3 w-3 rounded-full bg-white transition-transform ${occ.includes('date-night') ? 'translate-x-3' : ''}`} />
-          </span>
-        </button>
+        <div className="grid grid-cols-2 gap-1.5">
+          {MOMENTS.map(({ id, label, hint, Icon }) => {
+            const on = occ.includes(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onToggle('occasion', id)}
+                aria-pressed={on}
+                data-testid={`shop-filter-${id}`}
+                className={`flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-left transition-colors ${
+                  on ? 'bg-[color:var(--cp-ink)] text-[color:var(--cp-paper)] border-[color:var(--cp-ink)]' : 'border-black/12 hover:bg-black/5'
+                }`}
+              >
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={1.6} />
+                <span>
+                  <span className="block text-[12.5px] font-medium">{label}</span>
+                  <span className={`block text-[10px] ${on ? 'opacity-70' : 'text-black/50'}`}>{hint}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </Section>
 
       <Section id="tier" title="Tier" count={counts.tier} open={open.tier} onOpenChange={setSection('tier')}>

@@ -90,8 +90,8 @@ def test_api_search_respects_other_filters_and_sort():
     r = requests.get(f"{BASE}/products", params={"q": "noir", "sort": "high"}, timeout=30)
     prices = [p["price"] for p in r.json()]
     assert len(prices) >= 2 and prices == sorted(prices, reverse=True)
-    r2 = requests.get(f"{BASE}/products", params={"q": "noir", "date_night": "1"}, timeout=30)
-    assert all(p["date_night"] for p in r2.json())
+    r2 = requests.get(f"{BASE}/products", params={"q": "noir", "day_night": "night"}, timeout=30)
+    assert all(p["day_night"] in ("night", "both") for p in r2.json())
 
 
 def test_suggest_endpoint():

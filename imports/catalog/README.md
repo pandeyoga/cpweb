@@ -4,7 +4,7 @@ Folder ini adalah **sumber data katalog**. Edit file di sini lalu jalankan skrip
 
 | File | Isi |
 |------|-----|
-| `produk.xlsx` | Sheet **Produk**: 1 baris = 1 varian. 1.071 produk × 9 varian (Ukuran 35/60/100ml × Tipe Basic/Refine/Intense). Kolom `tier` (CP01/CP02/CP03/EXCLUSIVE), `date_night` (TRUE/FALSE), `characters` (keluarga aroma, pisah koma). |
+| `produk.xlsx` | Sheet **Produk**: 1 baris = 1 varian. 1.071 produk × 9 varian (Ukuran 35/60/100ml × Tipe Basic/Refine/Intense). Kolom `tier` (CP01/CP02/CP03/EXCLUSIVE), `day_night` (Day / Night / Day/Night / kosong), `characters` (keluarga aroma, pisah koma). |
 | `harga_matrix.csv` | Harga, harga coret, dan stok per **tier × ukuran × tipe** (36 baris). Kosong = belum ada harga. |
 | `laporan_terakhir.json` | Hasil validasi/eksekusi terakhir (dibuat otomatis). |
 
@@ -25,7 +25,10 @@ Yang terjadi saat `--apply`:
 2. Produk dengan slug yang sama **diganti** (id lama dipertahankan → riwayat pesanan tetap valid).
 3. Produk baru ditambahkan.
 4. Produk lama yang tidak ada di file **dihapus**; yang pernah dipesan hanya **diarsipkan** agar pesanan lama tidak rusak.
-5. Karakter aroma yang belum ada dibuat otomatis; occasion selain **Date Night** disembunyikan (`--keep-occasions` untuk mempertahankan).
+5. Karakter aroma yang belum ada dibuat otomatis; occasion lama disembunyikan (facet momen kini = kolom `day_night`).
+6. **Harga & stok lama dipertahankan**: varian dengan SKU sama (atau slug + Ukuran + Tipe sama) yang sudah punya harga di database memakai harga/stok itu bila kolom Excel kosong/0 (`--no-keep-prices` untuk mematikan).
+
+Cara termudah di VPS: `sudo bash scripts/vps_update_catalog.sh` (backup → ganti repo → deploy → cek → konfirmasi → terapkan).
 
 ## Aturan publikasi
 - Produk hanya **aktif (tampil di toko)** bila **semua 9 varian punya harga > 0**. Saat ini seluruh harga di file = 0,
@@ -42,4 +45,5 @@ Yang terjadi saat `--apply`:
   victoria-s-secret-pink-fruity-w → gourmand, tiziana-terenzi-kirke-overdose-u → floral-fruity-gourmand,
   parfums-de-marly-valaya-exclusif-w → floral-woody-musk.
 - `variant_sku` diisi otomatis (`SLUG-TIPE-UKURAN`, unik untuk 9.639 varian).
-- `date_night`/`best_seller`/`is_new` diubah dari teks "true/false" menjadi boolean.
+- `best_seller`/`is_new` teks "true/false" dibaca sebagai boolean.
+- 2026-09: file diganti versi DAY/NIGHT dari klien (kolom `day_night`; tidak ada lagi Date Night).

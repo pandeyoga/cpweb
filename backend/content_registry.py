@@ -63,6 +63,9 @@ HOME_SECTIONS = [
 ICON_OPTIONS = [{"value": v, "label": v} for v in (
     "truck", "shield-check", "rotate-ccw", "store", "map-pin", "award", "badge-check", "gift", "clock",
     "package", "crown", "sparkles", "heart", "star", "droplets", "leaf", "gem", "sun-moon", "flame")]
+BRAND_SORT = [{"value": "count", "label": "Jumlah produk terbanyak"},
+              {"value": "manual", "label": "Urutan manual (Admin › Brand), lalu terbanyak"},
+              {"value": "name", "label": "Abjad A–Z"}]
 SPEED_OPTIONS = [{"value": "slow", "label": "Lambat"}, {"value": "default", "label": "Normal"},
                  {"value": "fast", "label": "Cepat"}]
 MARQUEE_STYLE = [{"value": "light", "label": "Terang (krem)"}, {"value": "dark", "label": "Gelap (hitam)"},
@@ -210,12 +213,15 @@ SECTIONS = [
                    T("brand_label", "Tab 1 - label"), IMG("brand_icon", "Tab 1 - ikon SVG/PNG (opsional)"),
                    T("character_label", "Tab 2 - label"), IMG("character_icon", "Tab 2 - ikon SVG/PNG (opsional)"),
                    T("editor_label", "Tab 3 - label"), IMG("editor_icon", "Tab 3 - ikon SVG/PNG (opsional)"),
-                   T("best_label", "Tab 4 - label"), IMG("best_icon", "Tab 4 - ikon SVG/PNG (opsional)")],
+                   T("best_label", "Tab 4 - label"), IMG("best_icon", "Tab 4 - ikon SVG/PNG (opsional)"),
+                   T("brand_limit", "Tab Brand - jumlah brand ditampilkan (angka, 0 = semua)"),
+                   SEL("brand_sort", "Tab Brand - urutan", BRAND_SORT)],
         "default": {
             "eyebrow": "The Collector's Edit", "title": "Jelajahi dengan", "title_accent": "caramu.",
             "subtitle": "Mulai dari brand favorit, karakter aroma, pilihan editor, atau yang paling dicari minggu ini.",
             "brand_label": "Brand", "brand_icon": "", "character_label": "Character", "character_icon": "",
             "editor_label": "Editor's Picks", "editor_icon": "", "best_label": "Best Seller", "best_icon": "",
+            "brand_limit": "12", "brand_sort": "count",
         },
     },
     {

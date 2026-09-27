@@ -13,13 +13,15 @@ Aturan:
   - --apply: backup server otomatis (Admin › Backup) → produk slug sama DIGANTI (id lama dipertahankan
     agar riwayat pesanan tetap valid) → produk baru ditambah → produk lama yang tidak ada di file
     DIHAPUS, kecuali yang pernah dipesan (diarsipkan agar pesanan lama tidak rusak).
-  - Field baru: tier (CP01/CP02/CP03/EXCLUSIVE), date_night (bool → occasion "date-night").
-    concentration & ingredients tidak lagi diisi.
+  - Field: tier (CP01/CP02/CP03/EXCLUSIVE), day_night (Day / Night / Day/Night / kosong).
+    Kolom lama date_night (TRUE) tetap diterima → Day/Night. concentration & ingredients tidak diisi.
+  - Harga/stok yang SUDAH ADA di database (SKU sama, atau slug+Ukuran+Tipe sama) DIPERTAHANKAN bila
+    baris Excel kosong/0 (prioritas: Excel > database > harga_matrix.csv). --no-keep-prices mematikannya.
 
 Usage (dari folder aplikasi, mis. /home/collector/collector-parfum):
   python3 scripts/replace_catalog.py                 # cek/validasi saja (aman)
   python3 scripts/replace_catalog.py --apply         # backup + ganti katalog
-  Opsi: --file X.xlsx  --prices X.csv  --keep-occasions  --archive-out-of-stock
+  Opsi: --file X.xlsx  --prices X.csv  --no-keep-prices  --archive-out-of-stock
 """
 import argparse
 import asyncio
@@ -40,7 +42,7 @@ import os  # noqa: E402
 import openpyxl  # noqa: E402
 from motor.motor_asyncio import AsyncIOMotorClient  # noqa: E402
 
-from core_utils import new_id, now_iso  # noqa: E402
+from core_utils import DAY_NIGHT_LABEL, new_id, normalize_day_night, now_iso  # noqa: E402
 from services import backup as backup_svc  # noqa: E402
 from services import variants as V  # noqa: E402
 
@@ -50,8 +52,15 @@ TIERS = ["CP01", "CP02", "CP03", "EXCLUSIVE"]
 GENDERS = {"Pria", "Wanita", "Unisex"}
 REQUIRED = ["slug", "name", "category", "gender", "tier", "option1_name", "option1_value",
             "option2_name", "option2_value"]
-PRODUCT_FIELDS = ["name", "brand", "category", "gender", "description", "tags", "tier", "date_night",
+PRODUCT_FIELDS = ["name", "brand", "category", "gender", "description", "tags", "tier", "day_night",
                   "characters", "best_seller", "is_new", "status", "images", "video_url"]
+# Karakter hasil scraping rusak (diketahui) → keluarga aroma dari notes-nya; dilaporkan sebagai PERINGATAN.
+JUNK_CHARACTERS = {"bold-and-sensual", "excellent-choice-to-present-the-new", "new"}
+CHARACTER_FIX = {
+    "burberry-her-elixir-w": "floral-fruity-gourmand", "hugo-boss-element-m": "aromatic-aquatic",
+    "victoria-s-secret-pink-fruity-w": "gourmand", "tiziana-terenzi-kirke-overdose-u": "floral-fruity-gourmand",
+    "parfums-de-marly-valaya-exclusif-w": "floral-woody-musk",
+}
 SLUG_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 DEFAULT_FILE = ROOT / "imports" / "catalog" / "produk.xlsx"
 DEFAULT_PRICES = ROOT / "imports" / "catalog" / "harga_matrix.csv"
@@ -82,10 +91,14 @@ def load_rows(path):
     missing = [c for c in REQUIRED if c not in hdr]
     if missing:
         raise SystemExit(f"Kolom wajib tidak ada di sheet Produk: {missing}")
+    legacy_dn = "day_night" not in hdr and "date_night" in hdr
     rows = []
     for n, r in enumerate(it, start=2):
         if any(c not in (None, "") for c in r):
-            rows.append((n, {h: v for h, v in zip(hdr, r) if h}))
+            d = {h: v for h, v in zip(hdr, r) if h}
+            if legacy_dn:
+                d["day_night"] = "both" if truthy(d.pop("date_night", None)) else ""
+            rows.append((n, d))
     return rows
 
 
@@ -128,6 +141,9 @@ def validate(rows, categories):
             e.append(f"Ukuran {r.get('option1_value')!r} (harus {'/'.join(SIZES)})")
         if r.get("option2_name") != "Tipe" or r.get("option2_value") not in TYPES:
             e.append(f"Tipe {r.get('option2_value')!r} (harus {'/'.join(TYPES)})")
+        dn = r.get("day_night")
+        if dn not in (None, "") and not normalize_day_night(dn):
+            e.append(f"day_night {dn!r} (harus Day / Night / Day/Night / kosong)")
         for c in split_list(r.get("characters")):
             if not SLUG_RE.match(c):
                 e.append(f"characters {c!r} bukan slug")
@@ -139,6 +155,11 @@ def validate(rows, categories):
             skus[str(r["variant_sku"]).strip()] += 1
         errors += [f"baris {n}: {x}" for x in e]
         groups[slug].append((n, r))
+    for slug, rs in groups.items():
+        junk = JUNK_CHARACTERS & set(split_list(rs[0][1].get("characters")))
+        if junk:
+            warns.append(f"produk {slug}: karakter rusak {sorted(junk)} → {clean_characters(slug, rs[0][1].get('characters'))}"
+                         " (otomatis; cek manual)")
     errors += [f"SKU duplikat: {s}" for s, c in skus.items() if c > 1]
     for slug, rs in groups.items():
         for f in PRODUCT_FIELDS:
@@ -152,18 +173,43 @@ def validate(rows, categories):
     return groups, errors, warns
 
 
-def build_doc(slug, rs, prices, archive_oos, now):
+def clean_characters(slug, raw):
+    chars = split_list(raw)
+    if not JUNK_CHARACTERS & set(chars):
+        return chars
+    fixed = [c for c in chars if c not in JUNK_CHARACTERS]
+    return fixed or split_list(CHARACTER_FIX.get(slug, ""))
+
+
+async def load_existing_prices(db):
+    """Harga/stok varian yang sudah ada di DB → {sku: (...)} dan {(slug, ukuran, tipe): (...)}."""
+    by_sku, by_combo = {}, {}
+    async for p in db.products.find({}, {"_id": 0, "slug": 1, "variants": 1}):
+        for v in p.get("variants") or []:
+            val = (int(v.get("price") or 0), int(v.get("compare_at_price") or 0), int(v.get("stock") or 0))
+            if val[0] <= 0:
+                continue
+            if v.get("sku"):
+                by_sku[str(v["sku"]).strip().upper()] = val
+            o = v.get("options") or {}
+            by_combo[(p.get("slug"), o.get("Ukuran"), o.get("Tipe"))] = val
+    return by_sku, by_combo
+
+
+def build_doc(slug, rs, prices, archive_oos, now, existing=({}, {})):
     head = rs[0][1]
-    variants = []
+    variants, from_db = [], 0
     for _, r in sorted(rs, key=lambda x: (SIZES.index(x[1]["option1_value"]), TYPES.index(x[1]["option2_value"]))):
         size, typ = r["option1_value"], r["option2_value"]
+        sku = str(r.get("variant_sku") or f"{slug.upper()}-{typ.upper()}-{size.upper()}").strip()
         mp, mcap, mstock = prices.get((head["tier"], size, typ), (0, 0, 0))
-        price = as_int(r.get("variant_price")) or mp
-        cap = as_int(r.get("variant_compare_at_price")) or mcap
+        ex = existing[0].get(sku.upper()) or existing[1].get((slug, size, typ))
+        price = as_int(r.get("variant_price")) or (ex[0] if ex else 0) or mp
+        cap = as_int(r.get("variant_compare_at_price")) or (ex[1] if ex else 0) or mcap
+        stock = as_int(r.get("variant_stock")) or (ex[2] if ex else 0) or mstock
+        from_db += bool(ex and not as_int(r.get("variant_price")))
         variants.append({
-            "sku": str(r.get("variant_sku") or f"{slug.upper()}-{typ.upper()}-{size.upper()}").strip(),
-            "options": {"Ukuran": size, "Tipe": typ}, "price": price,
-            "stock": as_int(r.get("variant_stock")) or mstock,
+            "sku": sku, "options": {"Ukuran": size, "Tipe": typ}, "price": price, "stock": stock,
             "compare_at_price": cap if cap > price else None,
         })
     options = [{"name": "Ukuran", "values": [s for s in SIZES if any(v["options"]["Ukuran"] == s for v in variants)]},
@@ -172,20 +218,20 @@ def build_doc(slug, rs, prices, archive_oos, now):
     in_stock = any(v["stock"] > 0 for v in variants)
     wanted = str(head.get("status") or "active").strip().lower()
     status = "active" if wanted == "active" and priced and (in_stock or not archive_oos) else "archived"
-    dn = truthy(head.get("date_night"))
     return {
         "id": new_id("prd"), "slug": slug, "name": str(head["name"]).strip(),
         "brand": str(head.get("brand") or "Collector Parfum").strip(), "category": head["category"],
-        "gender": head["gender"], "tier": head["tier"], "date_night": dn,
+        "gender": head["gender"], "tier": head["tier"], "day_night": normalize_day_night(head.get("day_night")),
         "description": str(head.get("description") or "").strip(),
-        "tags": split_list(head.get("tags")), "characters": split_list(head.get("characters")),
-        "occasions": ["date-night"] if dn else [],
+        "tags": split_list(head.get("tags")), "characters": clean_characters(slug, head.get("characters")),
+        "occasions": [],
         "best_seller": truthy(head.get("best_seller")), "is_new": truthy(head.get("is_new")),
         "images": split_list(head.get("images")), "video_url": head.get("video_url") or None,
         "options": options, "variants": variants, "volumes": V.derive_volumes(options, variants),
         **V.price_range(variants),
         "notes": {"top": [], "heart": [], "base": []}, "performance": {}, "seo": {},
         "status": status, "rating_avg": 0.0, "rating_count": 0, "created_at": now, "updated_at": now,
+        "_priced_from_db": from_db,
     }
 
 
@@ -197,14 +243,9 @@ async def ensure_taxonomy(db, docs, keep_occasions):
         await db.characters.insert_one({"id": new_id("chr"), "slug": slug, "name": slug.replace("-", " ").title(),
                                         "desc": "", "icon": "sparkles", "active": True, "order": base + i + 1,
                                         "created_at": now_iso()})
-    if not await db.occasions.find_one({"slug": "date-night"}):
-        await db.occasions.insert_one({"id": new_id("occ"), "slug": "date-night", "name": "Date Night",
-                                       "desc": "Sensual & memikat untuk momen berdua.", "icon": "wine",
-                                       "active": True, "order": 1, "created_at": now_iso()})
-    await db.occasions.update_one({"slug": "date-night"}, {"$set": {"active": True}})
     hidden = 0
-    if not keep_occasions:
-        hidden = (await db.occasions.update_many({"slug": {"$ne": "date-night"}}, {"$set": {"active": False}})).modified_count
+    if not keep_occasions:  # facet momen kini = day_night; occasion lama disembunyikan
+        hidden = (await db.occasions.update_many({}, {"$set": {"active": False}})).modified_count
     return new, hidden
 
 
@@ -251,7 +292,9 @@ async def main():
     ap.add_argument("--file", default=str(DEFAULT_FILE))
     ap.add_argument("--prices", default=str(DEFAULT_PRICES))
     ap.add_argument("--apply", action="store_true", help="tulis ke database (tanpa ini = cek saja)")
-    ap.add_argument("--keep-occasions", action="store_true", help="jangan sembunyikan occasion selain Date Night")
+    ap.add_argument("--keep-occasions", action="store_true", help="jangan sembunyikan occasion lama")
+    ap.add_argument("--no-keep-prices", action="store_true",
+                    help="JANGAN pakai harga/stok lama dari database (default: dipakai bila Excel kosong)")
     ap.add_argument("--archive-out-of-stock", action="store_true", help="arsipkan produk yang semua stoknya 0")
     ap.add_argument("--allow-empty-store", action="store_true",
                     help="izinkan --apply walau belum ada produk berharga (semua jadi archived, toko kosong)")
@@ -263,14 +306,19 @@ async def main():
     groups, errors, warns = validate(rows, categories)
     prices = load_prices(a.prices, errors)
     now = now_iso()
-    docs = [] if errors else [build_doc(s, rs, prices, a.archive_out_of_stock, now) for s, rs in groups.items()]
+    existing = ({}, {}) if a.no_keep_prices else await load_existing_prices(db)
+    docs = [] if errors else [build_doc(s, rs, prices, a.archive_out_of_stock, now, existing)
+                              for s, rs in groups.items()]
+    priced_db = [d.pop("_priced_from_db") for d in docs]
     summary = {
         "rows": len(rows), "products": len(groups), "errors": len(errors), "warnings": len(warns),
         "price_matrix_filled": f"{sum(1 for v in prices.values() if v[0] > 0)}/36",
         "active": sum(d["status"] == "active" for d in docs),
         "archived_no_price_or_stock": sum(d["status"] == "archived" for d in docs),
         "tiers": dict(Counter(d["tier"] for d in docs)),
-        "date_night": sum(d["date_night"] for d in docs),
+        "variants_priced_from_existing_db": sum(priced_db),
+        "day_night": {DAY_NIGHT_LABEL[k] or "(kosong)": v for k, v in Counter(d["day_night"] for d in docs).items()},
+        "brands_active_top12": [b for b, _ in Counter(d["brand"] for d in docs if d["status"] == "active").most_common(12)],
     }
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     for m in errors[:40]:
@@ -282,7 +330,8 @@ async def main():
         return 1
     if summary["archived_no_price_or_stock"]:
         print(f"\nCatatan: {summary['archived_no_price_or_stock']} produk akan disimpan ARCHIVED (belum ada harga"
-              " valid). Isi imports/catalog/harga_matrix.csv lalu jalankan ulang.")
+              " valid di Excel / database lama / harga_matrix.csv). Isi harga lewat Admin › Produk › Impor (isi harga per tier)"
+              " atau imports/catalog/harga_matrix.csv lalu jalankan ulang.")
     result = {}
     if a.apply and not summary["active"] and not a.allow_empty_store:
         print("\nDIBATALKAN: tidak ada satu pun produk yang akan aktif (harga belum diisi) sehingga toko akan kosong."

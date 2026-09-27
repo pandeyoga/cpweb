@@ -25,7 +25,7 @@ class AdminProductInput(BaseModel):
     brand: str = Field(default="Collector", max_length=120)
     category: str = Field(min_length=1)  # FK -> categories.slug
     tier: Optional[Literal["CP01", "CP02", "CP03", "EXCLUSIVE"]] = None   # tingkat harga produk (kontrak v2)
-    date_night: bool = False   # satu-satunya facet occasion (kontrak v2)
+    day_night: Literal["", "day", "night", "both"] = ""   # facet momen: Day / Night / Day/Night
     gender: Literal["Pria", "Wanita", "Unisex"] = "Unisex"
     compare_at_price: Optional[int] = Field(default=None, gt=0)  # INV-C2: > price / null
     best_seller: bool = False

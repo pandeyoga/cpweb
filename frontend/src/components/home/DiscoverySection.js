@@ -29,9 +29,18 @@ const DEFAULTS = {
 };
 const norm = (s) => String(s || '').toLowerCase();
 
-const Searchable = ({ items, keyOf, render, placeholder, testId, slideClass }) => {
+// Urutan tab Brand (CMS discovery_section.brand_sort); API sudah urut manual→terbanyak.
+const BRAND_SORTS = {
+  count: (a, b) => (b.count || 0) - (a.count || 0) || a.name.localeCompare(b.name),
+  manual: null,
+  name: (a, b) => a.name.localeCompare(b.name),
+};
+
+// Tanpa pencarian: tampil `limit` teratas (0 = semua); pencarian selalu menelusuri SEMUA item.
+const Searchable = ({ items, keyOf, render, placeholder, testId, slideClass, limit = 0, sortFn = null }) => {
   const [q, setQ] = React.useState('');
-  const list = q ? items.filter((x) => norm(keyOf(x)).includes(norm(q))) : items;
+  const sorted = sortFn ? [...items].sort(sortFn) : items;
+  const list = q ? sorted.filter((x) => norm(keyOf(x)).includes(norm(q))) : (limit > 0 ? sorted.slice(0, limit) : sorted);
   return (
     <div className="space-y-5">
       <InlineSearch value={q} onChange={setQ} placeholder={placeholder} testId={testId} total={items.length} shown={list.length} />
@@ -46,7 +55,7 @@ const Searchable = ({ items, keyOf, render, placeholder, testId, slideClass }) =
   );
 };
 
-const TabBody = ({ tab }) => {
+const TabBody = ({ tab, brandLimit, brandSort }) => {
   const { characters } = useCatalog();
   const { openQuickView } = useQuickView();
   const { data, error } = useDiscoveryData(tab);
@@ -61,7 +70,7 @@ const TabBody = ({ tab }) => {
   if (!data) return <ProductRowSkeleton count={5} testId="discovery-loading" />;
   if (tab === 'brand') {
     return (
-      <Searchable items={data} keyOf={(b) => b.name} placeholder="Cari brand — mis. Dior, Bvlgari…" testId="discovery-brand-search"
+      <Searchable items={data} limit={brandLimit} sortFn={BRAND_SORTS[brandSort] || BRAND_SORTS.count} keyOf={(b) => b.name} placeholder="Cari brand — mis. Dior, Bvlgari…" testId="discovery-brand-search"
         slideClass="w-[78%] sm:w-[44%] lg:w-[29%] xl:w-[23%]" render={(b) => <BrandTile key={b.name} brand={b} />} />
     );
   }
@@ -109,7 +118,9 @@ export const DiscoverySection = () => {
         <DiscoveryTabs tabs={tabs} active={tab} onChange={setTab} />
         <div className="mt-7 min-h-[380px]" role="tabpanel" data-testid={`discovery-panel-${tab}`}>
           <AnimatePresence mode="wait">
-            <motion.div key={tab} {...motionProps}><TabBody tab={tab} /></motion.div>
+            <motion.div key={tab} {...motionProps}>
+              <TabBody tab={tab} brandLimit={parseInt(c.brand_limit ?? '12', 10) || 0} brandSort={c.brand_sort || 'count'} />
+            </motion.div>
           </AnimatePresence>
         </div>
       </div>

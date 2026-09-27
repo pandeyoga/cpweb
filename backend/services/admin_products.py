@@ -6,7 +6,7 @@ harga>0). TIDAK menghitung pricing (SSOT tetap services/pricing.py). Archive = s
 """
 import re
 
-from core_utils import new_id, now_iso, safe_doc
+from core_utils import new_id, normalize_day_night, now_iso, safe_doc
 from services.audit import log_action
 from services.product_io import clean_variants
 from services import variants as V
@@ -74,7 +74,7 @@ async def _build_doc(db, data):
         "brand": str(data.get("brand", "Collector")).strip()[:120] or "Collector",
         "category": data.get("category"),
         "tier": data.get("tier") or None,
-        "date_night": bool(data.get("date_night")),
+        "day_night": normalize_day_night(data.get("day_night")),
         "gender": data.get("gender", "Unisex"),
         "price": price,
         "price_min": rng["price_min"],
@@ -85,7 +85,7 @@ async def _build_doc(db, data):
         "best_seller": bool(data.get("best_seller")),
         "is_new": bool(data.get("is_new")),
         "tags": [str(t).strip() for t in (data.get("tags") or []) if str(t).strip()][:20],
-        "occasions": ["date-night"] if data.get("date_night") else [],
+        "occasions": [],
         "characters": [str(x).strip() for x in (data.get("characters") or []) if str(x).strip()][:20],
         "volumes": volumes,
         "options": options,
@@ -158,9 +158,9 @@ async def create_product(db, actor_id, data):
 # admin melakukan export -> re-import (mode Upsert).
 # Catatan: request HTTP PUT (AdminProductInput.model_dump()) SELALU mengirim semua key,
 # jadi editor produk tetap bisa mengosongkan field secara eksplisit.
-PRESERVE_IF_ABSENT = ("tier", "date_night", "occasions", "characters", "notes", "performance", "seo",
+PRESERVE_IF_ABSENT = ("tier", "day_night", "occasions", "characters", "notes", "performance", "seo",
                       "images", "video_url")
-LEGACY_FIELDS = {"concentration": "", "ingredients": ""}  # kontrak v2: dihapus saat produk ditulis ulang
+LEGACY_FIELDS = {"concentration": "", "ingredients": "", "date_night": ""}  # kontrak v2: dihapus saat produk ditulis ulang
 
 
 async def update_product(db, actor_id, pid, data):
@@ -171,7 +171,6 @@ async def update_product(db, actor_id, pid, data):
     for key in PRESERVE_IF_ABSENT:
         if key not in data and key in existing:
             doc[key] = existing[key]
-    doc["occasions"] = ["date-night"] if doc.get("date_night") else []
     base = _slugify(data.get("slug") or doc["name"])
     doc["slug"] = await _unique_slug(db, base, exclude_id=pid)
     # INV-C3: rating adalah derivasi review — JANGAN diubah lewat editor produk.

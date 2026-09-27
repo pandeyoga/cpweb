@@ -41,15 +41,18 @@ def test_public_product_has_no_concentration_or_ingredients():
     for p in items:
         assert "concentration" not in p and "ingredients" not in p
         assert p.get("tier") in ("CP01", "CP02", "CP03", "EXCLUSIVE")
-        assert isinstance(p.get("date_night"), bool)
+        assert p.get("day_night") in ("", "day", "night", "both")
 
 
 def test_filters_tier_datenight_tipe_combine():
     all_items, total = _products()
-    dn, n_dn = _products(date_night=1)
-    assert n_dn == sum(p["date_night"] for p in all_items) and all(p["date_night"] for p in dn)
-    legacy, n_legacy = _products(occasion="date-night")
-    assert n_legacy == n_dn
+    dn, n_dn = _products(day_night="night")
+    assert n_dn == sum(p["day_night"] in ("night", "both") for p in all_items)
+    assert all(p["day_night"] in ("night", "both") for p in dn)
+    day, n_day = _products(day_night="day")
+    assert all(p["day_night"] in ("day", "both") for p in day)
+    legacy, n_legacy = _products(date_night=1)
+    assert n_legacy == sum(p["day_night"] == "both" for p in all_items)
     t, n_t = _products(tier="CP01")
     assert n_t == sum(p["tier"] == "CP01" for p in all_items) and all(p["tier"] == "CP01" for p in t)
     refine, _ = _products(tipe="Refine", sort="low")
@@ -60,14 +63,14 @@ def test_filters_tier_datenight_tipe_combine():
     cap = min(p["type_price_min"] for p in refine) if refine else 0
     within, _ = _products(tipe="Refine", max_price=cap)
     assert all(p["type_price_min"] <= cap for p in within)
-    combo, n_combo = _products(tier="CP01", date_night=1, tipe="Basic")
-    assert all(p["tier"] == "CP01" and p["date_night"] for p in combo)
+    combo, n_combo = _products(tier="CP01", day_night="night", tipe="Basic")
+    assert all(p["tier"] == "CP01" and p["day_night"] in ("night", "both") for p in combo)
     assert n_combo <= min(n_t, n_dn)
 
 
-def test_only_date_night_occasion_public():
+def test_occasions_endpoint_ok():
     r = requests.get(f"{BASE}/occasions", timeout=30)
-    assert [o["slug"] for o in r.json()] == ["date-night"]
+    assert r.status_code == 200 and isinstance(r.json(), list)
 
 
 def test_admin_tier_datenight_roundtrip_and_export(admin_h):
@@ -76,16 +79,16 @@ def test_admin_tier_datenight_roundtrip_and_export(admin_h):
     body = r.json()
     payload = {k: body[k] for k in ("name", "slug", "brand", "category", "gender", "options", "variants",
                                     "characters", "description", "images", "status")}
-    payload.update(tier="EXCLUSIVE", date_night=False, concentration="EDP")
+    payload.update(tier="EXCLUSIVE", day_night="day", concentration="EDP")
     r = requests.put(f"{BASE}/admin/products/{p['id']}", json=payload, headers=admin_h, timeout=30)
     assert r.status_code == 200, r.text
     d = r.json()
-    assert d["tier"] == "EXCLUSIVE" and d["date_night"] is False and d["occasions"] == []
+    assert d["tier"] == "EXCLUSIVE" and d["day_night"] == "day" and "date_night" not in d
     assert "concentration" not in d
     exp = requests.get(f"{BASE}/admin/products/io/export", params={"format": "csv"}, headers=admin_h, timeout=60)
     head = exp.text.splitlines()[0]
-    assert "tier" in head and "date_night" in head and "concentration" not in head and "ingredients" not in head
-    payload.update(tier=body.get("tier") or "CP01", date_night=body.get("date_night", True))
+    assert "tier" in head and "day_night" in head and "concentration" not in head and "ingredients" not in head
+    payload.update(tier=body.get("tier") or "CP01", day_night=body.get("day_night", "both"))
     requests.put(f"{BASE}/admin/products/{p['id']}", json=payload, headers=admin_h, timeout=30)
 
 

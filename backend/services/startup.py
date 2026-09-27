@@ -34,7 +34,7 @@ INDEXES = [
     ("analytics_events", "id", _U), ("analytics_events", "type", {}), ("analytics_events", "created_at", {}),
     ("content", "id", _U), ("store_locations", "id", _U), ("store_locations", "order", {}),
     ("store_reviews", "id", _U), ("backups", "id", _U), ("backups", "created_at", {}), ("brands", "name", _U),
-] + [("products", [("status", 1), (f, 1)], {}) for f in ("tier", "date_night", "variants.options.Tipe", "characters", "category")]
+] + [("products", [("status", 1), (f, 1)], {}) for f in ("tier", "day_night", "variants.options.Tipe", "characters", "category")]
 
 
 async def _step(name, coro):
@@ -54,3 +54,10 @@ async def run(db, extra_steps):
         await _step(name, factory())
     STATE["ready"] = not STATE["errors"]
     logger.info(f"Startup selesai: ready={STATE['ready']} errors={len(STATE['errors'])}")
+
+
+async def migrate_day_night(db):
+    """date_night (bool, lama) → day_night ("both"/""); idempoten."""
+    await db.products.update_many({"date_night": True, "day_night": {"$exists": False}}, {"$set": {"day_night": "both"}})
+    await db.products.update_many({"day_night": {"$exists": False}}, {"$set": {"day_night": ""}})
+    await db.products.update_many({"date_night": {"$exists": True}}, {"$unset": {"date_night": ""}, "$set": {"occasions": []}})

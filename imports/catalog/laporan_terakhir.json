@@ -1,30 +1,36 @@
 {
-  "at": "2026-09-27T04:49:56.824368+00:00",
-  "applied": true,
+  "at": "2026-09-27T17:34:55.048587+00:00",
+  "applied": false,
   "summary": {
     "rows": 9639,
     "products": 1071,
     "errors": 0,
-    "warnings": 0,
-    "price_matrix_filled": "36/36",
-    "active": 1071,
-    "archived_no_price_or_stock": 0,
+    "warnings": 5,
+    "price_matrix_filled": "0/36",
+    "active": 0,
+    "archived_no_price_or_stock": 1071,
     "tiers": {
       "CP02": 417,
       "CP01": 532,
       "CP03": 107,
       "EXCLUSIVE": 15
     },
-    "date_night": 682
+    "variants_priced_from_existing_db": 0,
+    "day_night": {
+      "(kosong)": 597,
+      "Day": 286,
+      "Night": 30,
+      "Day/Night": 158
+    },
+    "brands_active_top12": []
   },
-  "result": {
-    "replaced": 1071,
-    "inserted": 0,
-    "deleted_old": 0,
-    "archived_old_ordered": 1,
-    "new_characters": [],
-    "occasions_hidden": 0
-  },
+  "result": {},
   "errors": [],
-  "warnings": []
+  "warnings": [
+    "produk burberry-her-elixir-w: karakter rusak ['bold-and-sensual'] → ['floral-fruity-gourmand'] (otomatis; cek manual)",
+    "produk hugo-boss-element-m: karakter rusak ['excellent-choice-to-present-the-new'] → ['aromatic-aquatic'] (otomatis; cek manual)",
+    "produk victoria-s-secret-pink-fruity-w: karakter rusak ['new'] → ['gourmand'] (otomatis; cek manual)",
+    "produk tiziana-terenzi-kirke-overdose-u: karakter rusak ['new'] → ['floral-fruity-gourmand'] (otomatis; cek manual)",
+    "produk parfums-de-marly-valaya-exclusif-w: karakter rusak ['new'] → ['floral-woody-musk'] (otomatis; cek manual)"
+  ]
 }

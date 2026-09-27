@@ -155,6 +155,7 @@ async def _startup():
         ("login guard indexes", lambda: login_guard.ensure_indexes(db)),
         ("media legacy migration", lambda: media_svc.migrate_legacy(db)),
         ("media default folders", lambda: media_svc.ensure_default_folders(db)),
+        ("day/night migration", lambda: startup_svc.migrate_day_night(db)),
     ])
 
 

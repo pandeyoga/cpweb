@@ -125,3 +125,21 @@ async def next_sequence(db, name: str, prefix: str = "", pad: int = 8) -> str:
     )
     seq = int(doc.get("seq", 1)) if doc else 1
     return f"{prefix}{str(seq).zfill(pad)}"
+
+
+# Day/Night (pengganti date_night): "" | day | night | both. Toleran label file impor & legacy bool.
+DAY_NIGHT_VALUES = ("", "day", "night", "both")
+DAY_NIGHT_LABEL = {"": "", "day": "Day", "night": "Night", "both": "Day/Night"}
+
+
+def normalize_day_night(v) -> str:
+    if v is True:
+        return "both"
+    s = str(v or "").strip().lower().replace(" ", "")
+    if s in ("day", "siang", "d"):
+        return "day"
+    if s in ("night", "malam", "n"):
+        return "night"
+    if s in ("both", "day/night", "day&night", "daynight", "siang/malam", "keduanya", "true", "1", "ya", "yes"):
+        return "both"
+    return ""

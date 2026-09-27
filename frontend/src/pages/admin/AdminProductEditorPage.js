@@ -30,7 +30,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/ta
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../components/ui/select';
 
 const BLANK = {
-  name: '', slug: '', brand: 'Collector', category: '', tier: '', date_night: false, gender: 'Unisex',
+  name: '', slug: '', brand: 'Collector', category: '', tier: '', day_night: '', gender: 'Unisex',
   compare_at_price: '', best_seller: false, is_new: false, status: 'active',
   description: '', video_url: '',
   options: [], variants: [],
@@ -79,7 +79,7 @@ export default function AdminProductEditorPage() {
           setForm({
             ...BLANK, ...p,
             compare_at_price: p.compare_at_price || '',
-            tier: p.tier || '', date_night: !!p.date_night, video_url: p.video_url || '',
+            tier: p.tier || '', day_night: p.day_night || '', video_url: p.video_url || '',
             characters: p.characters || [],
             options: p.options || [],
             variants: (p.variants || []).map((v) => ({
@@ -238,7 +238,7 @@ export default function AdminProductEditorPage() {
     setSaving(true);
     const payload = {
       name: form.name.trim(), slug: form.slug || undefined, brand: form.brand || 'Collector',
-      category: form.category, tier: form.tier || null, date_night: !!form.date_night, gender: form.gender,
+      category: form.category, tier: form.tier || null, day_night: form.day_night || '', gender: form.gender,
       compare_at_price: form.compare_at_price ? Number(form.compare_at_price) : null,
       best_seller: !!form.best_seller, is_new: !!form.is_new, tags: csv(tagsText),
       characters: form.characters || [],
@@ -352,7 +352,13 @@ export default function AdminProductEditorPage() {
                 <div className="flex items-center gap-6">
                   <label className="flex items-center gap-2 text-sm"><Switch checked={form.best_seller} onCheckedChange={(v) => set({ best_seller: v })} /> Best Seller</label>
                   <label className="flex items-center gap-2 text-sm"><Switch checked={form.is_new} onCheckedChange={(v) => set({ is_new: v })} /> Produk Baru</label>
-                  <label className="flex items-center gap-2 text-sm"><Switch checked={!!form.date_night} onCheckedChange={(v) => set({ date_night: v })} data-testid="admin-product-date-night" /> Day &amp; Night</label>
+                  <label className="flex items-center gap-2 text-sm">Momen
+                    <select value={form.day_night || ''} onChange={(e) => set({ day_night: e.target.value })} data-testid="admin-product-day-night"
+                      className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+                      <option value="">— Tidak ada —</option><option value="day">Day</option>
+                      <option value="night">Night</option><option value="both">Day/Night</option>
+                    </select>
+                  </label>
                 </div>
               </TabsContent>
 

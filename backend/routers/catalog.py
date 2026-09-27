@@ -2,7 +2,7 @@
 
 Kontrak (respons = ARRAY/OBJEK telanjang; TANPA envelope):
   GET /api/brands          -> [{name, count, images[], sample[]}]  (brand produk aktif)
-  GET /api/products?category&gender&tier&date_night&tipe&character&brand&min_price&max_price&q&ids&tag&sort&limit&skip
+  GET /api/products?category&gender&tier&day_night(day,night)&tipe&character&brand&min_price&max_price&q&ids&tag&sort&limit&skip
       -> [Product, ...]   (hanya status=active) + header X-Total-Count
       q = pencarian toleran typo/singkatan; sort default/relevance → urut relevansi; header X-Did-You-Mean.
   GET /api/search/suggest?q&limit -> {query, did_you_mean, total, products[], terms[]}  (saran instan)
@@ -30,6 +30,7 @@ async def get_products(
     category: Optional[str] = Query(default=None),
     gender: Optional[str] = Query(default=None),
     tier: Optional[str] = Query(default=None),
+    day_night: Optional[str] = Query(default=None),
     date_night: Optional[str] = Query(default=None),
     tipe: Optional[str] = Query(default=None),
     tag: Optional[str] = Query(default=None),
@@ -48,7 +49,7 @@ async def get_products(
 ):
     db = get_db()
     filt = svc.build_product_filter(
-        category=category, gender=gender, tier=tier, date_night=date_night, tipe=tipe,
+        category=category, gender=gender, tier=tier, day_night=day_night, date_night=date_night, tipe=tipe,
         tag=tag, occasion=occasion, character=character, brand=brand,
         min_price=min_price, max_price=max_price,
         best_seller=best_seller, is_new=is_new, ids=ids,

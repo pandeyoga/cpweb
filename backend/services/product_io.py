@@ -12,7 +12,7 @@ Identitas varian runtime = (type, ml); `type=""` = produk tanpa dimensi tipe.
 import re
 from typing import List
 
-from core_utils import money
+from core_utils import DAY_NIGHT_LABEL, money
 
 GENDERS = {"pria", "wanita", "unisex"}
 CONCENTRATIONS = {"EDP", "EDT"}
@@ -176,7 +176,7 @@ OPTION_SLOTS = 4
 # Kolom ekspor kanonik (urutan tetap) — dipakai export & template.
 # Model N-dimensi: tiap dimensi punya sepasang kolom (nama+nilai), Shopify-style.
 EXPORT_COLUMNS = [
-    "slug", "name", "brand", "category", "gender", "tier", "date_night",
+    "slug", "name", "brand", "category", "gender", "tier", "day_night",
     "description", "tags", "characters",
     "best_seller", "is_new", "status",
     "images", "video_url",
@@ -199,7 +199,7 @@ def product_to_rows(prod: dict) -> List[dict]:
         "category": prod.get("category", ""),
         "gender": prod.get("gender", ""),
         "tier": prod.get("tier") or "",
-        "date_night": "true" if prod.get("date_night") else "false",
+        "day_night": DAY_NIGHT_LABEL.get(prod.get("day_night") or "", ""),
         "description": prod.get("description", ""),
         "tags": ", ".join(prod.get("tags", []) or []),
         # Facet taksonomi (slug) — disertakan agar round-trip export -> import LOSSLESS.

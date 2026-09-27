@@ -11,7 +11,7 @@
 #  Proses: Supervisor (backend) + Nginx (frontend & reverse proxy) + Certbot (opsional)
 #
 #  CARA PAKAI (di VPS, sebagai root):
-#     wget -O deploy.sh https://raw.githubusercontent.com/pandekomangyogaswastika-dot/cpweb/main/deploy.sh
+#     wget -O deploy.sh https://raw.githubusercontent.com/pandeyoga/cpweb/main/deploy.sh
 #     sudo bash deploy.sh
 #
 #  Tanpa domain -> otomatis dilayani lewat IP VPS (http://<IP>).
@@ -44,7 +44,7 @@ fi
 APP_USER="${APP_USER:-collector}"               # user linux khusus aplikasi ini
 DOMAIN="${DOMAIN:-}"                            # KOSONG = pakai IP VPS (belum ada domain)
 SERVER_IP="${SERVER_IP:-148.230.102.29}"        # kosongkan = auto-deteksi IP publik
-REPO_URL="${REPO_URL:-https://github.com/pandekomangyogaswastika-dot/cpweb.git}"
+REPO_URL="${REPO_URL:-https://github.com/pandeyoga/cpweb.git}"
 REPO_BRANCH="${REPO_BRANCH:-main}"
 
 BACKEND_PORT="${BACKEND_PORT:-8003}"            # 8001 KBS8, 8002 Garment ERP -> app ini 8003
@@ -219,6 +219,12 @@ fi
 git config --global --add safe.directory "${APP_DIR}" 2>/dev/null || true
 
 if [[ -d "${APP_DIR}/.git" ]]; then
+  CUR_REMOTE="$(sudo -u "${APP_USER}" git -C "${APP_DIR}" remote get-url origin 2>/dev/null || echo '')"
+  if [[ "${CUR_REMOTE}" != "${REPO_URL}" ]]; then
+    warn "Remote git berubah: ${CUR_REMOTE:-(kosong)} -> ${REPO_URL}"
+    sudo -u "${APP_USER}" git -C "${APP_DIR}" remote set-url origin "${REPO_URL}" 2>/dev/null \
+      || sudo -u "${APP_USER}" git -C "${APP_DIR}" remote add origin "${REPO_URL}"
+  fi
   log "Repo sudah ada — mengambil versi terbaru (git fetch + reset --hard)"
   sudo -u "${APP_USER}" git -C "${APP_DIR}" fetch --all --quiet
   sudo -u "${APP_USER}" git -C "${APP_DIR}" reset --hard "origin/${REPO_BRANCH}" --quiet
@@ -597,5 +603,5 @@ echo ""
 echo -e " Update nanti : cd ${APP_DIR} && sudo bash deploy.sh   (idempoten, domain/SSL diingat)"
 echo -e " Pasang domain: sudo DOMAIN=collectorparfum.com SETUP_SSL=yes bash deploy.sh"
 echo -e " Pilihan aktif: ${DEPLOY_CONF}"
-echo -e " Impor katalog: login admin -> Produk -> Impor / Ekspor -> unggah .xlsx"
+echo -e " Impor katalog: sudo bash ${APP_DIR}/scripts/vps_update_catalog.sh  (atau Admin -> Produk -> Impor)"
 echo -e "${C_GREEN}============================================================${C_OFF}"

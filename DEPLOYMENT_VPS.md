@@ -19,7 +19,7 @@
 | Frontend | build statis dilayani Nginx |
 | Data persisten | `/var/lib/collector-parfum/media` & `/var/lib/collector-parfum/backups` |
 | Domain | **collectorparfum.com** (DNS di fastcloud.id) → lihat §5. Sebelum DNS diarahkan: `http://148.230.102.29` |
-| Repo sumber | `https://github.com/pandekomangyogaswastika-dot/cpweb.git` (branch `main`) |
+| Repo sumber | `https://github.com/pandeyoga/cpweb.git` (branch `main`) |
 
 **Peta port di VPS ini (agar tidak bentrok):**
 
@@ -45,7 +45,7 @@
 
 ```bash
 # di VPS, sebagai root
-wget -O deploy.sh https://raw.githubusercontent.com/pandekomangyogaswastika-dot/cpweb/main/deploy.sh
+wget -O deploy.sh https://raw.githubusercontent.com/pandeyoga/cpweb/main/deploy.sh
 sudo bash deploy.sh
 ```
 

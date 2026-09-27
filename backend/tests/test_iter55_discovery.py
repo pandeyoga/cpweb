@@ -83,8 +83,8 @@ def test_products_character_filter(client):
         assert slug in (p.get("characters") or [])
 
 
-def test_products_date_night_filter(client):
-    r = client.get(f"{BASE}/api/products", params={"date_night": 1}, timeout=15)
+def test_products_day_night_filter(client):
+    r = client.get(f"{BASE}/api/products", params={"day_night": "day,night"}, timeout=15)
     assert r.status_code == 200
     # Only assert endpoint accepts filter and returns int total
     int(r.headers.get("X-Total-Count", "0"))

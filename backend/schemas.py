@@ -109,14 +109,14 @@ class Product(BaseModel):
     brand: str = "Collector"
     category: str  # FK -> categories.slug
     tier: Optional[Literal["CP01", "CP02", "CP03", "EXCLUSIVE"]] = None
-    date_night: bool = False
+    day_night: Literal["", "day", "night", "both"] = ""
     gender: Literal["Pria", "Wanita", "Unisex"] = "Unisex"
     price: int = Field(gt=0)  # harga display = harga varian utama (> 0)
     compare_at_price: Optional[int] = Field(default=None, gt=0)  # INV-C2: null atau > price
     best_seller: bool = False
     is_new: bool = False
     tags: List[str] = []
-    occasions: List[str] = []   # turunan date_night → ["date-night"] (kompat URL lama)
+    occasions: List[str] = []   # legacy (tidak dipakai lagi; facet momen = day_night)
     characters: List[str] = []  # facet MULTI karakter aroma (mis. fresh, rose, woody)
     volumes: List[Volume] = Field(default_factory=list)  # legacy (derived) — kompat export/impor
     options: List[OptionDef] = Field(default_factory=list)    # N-dimensi (SSOT definisi dimensi)

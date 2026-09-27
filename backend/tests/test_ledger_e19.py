@@ -80,7 +80,7 @@ async def _fixtures(db, stock=10, voucher_limit=0):
     variants = [{"sku": f"{pid}-{t}-{ml}", "options": {"Tipe": t, "Ukuran": f"{ml}ml"}, "price": 100000, "stock": stock}
                 for t in ("Basic", "Refine", "Intense") for ml in (35, 60, 100)]
     await db.products.insert_one({"id": pid, "slug": pid, "name": "Uji", "status": "active", "category": "woody",
-                                  "tier": "CP01", "date_night": False, "characters": [],
+                                  "tier": "CP01", "day_night": "", "characters": [],
                                   "images": [], "options": [{"name": "Tipe", "values": ["Basic", "Refine", "Intense"]},
                                                             {"name": "Ukuran", "values": ["35ml", "60ml", "100ml"]}],
                                   "variants": variants})

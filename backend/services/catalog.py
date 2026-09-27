@@ -56,7 +56,7 @@ def _truthy(value):
     return str(value).strip().lower() in {"1", "true", "yes", "on"}
 
 
-def build_product_filter(*, category=None, gender=None, tier=None, date_night=None,
+def build_product_filter(*, category=None, gender=None, tier=None, day_night=None, date_night=None,
                          tag=None, occasion=None, character=None, q=None, brand=None,
                          min_price=None, max_price=None, tipe=None,
                          best_seller=None, is_new=None, ids=None):
@@ -79,8 +79,12 @@ def build_product_filter(*, category=None, gender=None, tier=None, date_night=No
         filt["tier"] = {"$in": tiers}
     if tags:
         filt["tags"] = {"$in": tags}
-    if _truthy(date_night) or "date-night" in _multi(occasion):  # ?occasion=date-night = URL lama
-        filt["date_night"] = True
+    # Day/Night: ?day_night=day,night → cocok nilai tsb + "both" (Day/Night). URL lama date_night=1 → both.
+    moments = [m for m in _multi(day_night) if m in ("day", "night", "both")]
+    if not moments and (_truthy(date_night) or "date-night" in _multi(occasion)):
+        moments = ["both"]
+    if moments:
+        filt["day_night"] = {"$in": sorted(set(moments) | {"both"})}
     if chars:
         filt["characters"] = {"$in": chars}
     if _truthy(best_seller):

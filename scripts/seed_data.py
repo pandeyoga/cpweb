@@ -491,7 +491,7 @@ async def seed_products(db, ratings):
         doc = {
             "id": pid, "slug": slug, "name": p["name"], "brand": "Collector",
             "category": p["category"], "gender": p["gender"],
-            "tier": _tier_for(disp_price), "date_night": "date-night" in facets.get("occasions", []),
+            "tier": _tier_for(disp_price), "day_night": "both" if "date-night" in facets.get("occasions", []) else "",
             "price": disp_price,
             "price_min": rng["price_min"], "price_max": rng["price_max"],
             "compare_at_price": prod_cap,

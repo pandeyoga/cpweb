@@ -21,7 +21,7 @@ import { useContent } from '../store/ContentContext';
 const SHOP_DEFAULT = {
   eyebrow: 'Toko', title: 'Semua parfum, satu', title_accent: 'rak', title_after: '.',
   seo_title: 'Semua Parfum — Koleksi Collector Parfum',
-  seo_description: 'Jelajahi seluruh koleksi parfum refill: filter brand, karakter aroma, tier, tipe, gender, dan Day & Night. Kirim ke seluruh Indonesia.',
+  seo_description: 'Jelajahi seluruh koleksi parfum refill: filter brand, karakter aroma, tier, tipe, gender, dan Day / Night. Kirim ke seluruh Indonesia.',
   empty_title: 'Belum ada produk yang cocok.', empty_hint: 'Coba ubah atau reset filter.',
 };
 
@@ -61,6 +61,8 @@ const useMinWidth = (px) => {
   return matches;
 };
 
+const DAY_NIGHT_LABEL = { day: 'Day', night: 'Night' };
+
 export default function ShopPage() {
   const q = useQuery();
   const location = useLocation();
@@ -74,10 +76,12 @@ export default function ShopPage() {
   const isDesktop = useMinWidth(1024);
 
   const [cats, setCats] = React.useState(csvParam(q.get('cat')));
-  // Day & Night (field `date_night`) = satu-satunya facet momen; ?occasion=date-night lama tetap dikenali.
-  const [occ, setOcc] = React.useState(
-    q.get('date_night') === '1' || csvParam(q.get('occasion')).includes('date-night') ? ['date-night'] : []
-  );
+  // Momen (field `day_night`): filter Day / Night; produk "Day/Night" ikut di keduanya. URL lama date_night=1 → keduanya.
+  const [occ, setOcc] = React.useState(() => {
+    const v = csvParam(q.get('day_night')).filter((x) => x === 'day' || x === 'night');
+    if (v.length) return v;
+    return q.get('date_night') === '1' || csvParam(q.get('occasion')).includes('date-night') ? ['day', 'night'] : [];
+  });
   const [chars, setChars] = React.useState(csvParam(q.get('character')));
   const [brands, setBrands] = React.useState(csvParam(q.get('brand')));
   const [brandOptions, setBrandOptions] = React.useState([]);
@@ -103,7 +107,7 @@ export default function ShopPage() {
     (extra) => {
       const p = { sort, ...extra };
       if (cats.length) p.category = cats.join(',');
-      if (occ.length) p.date_night = 1;
+      if (occ.length) p.day_night = occ.join(',');
       if (chars.length) p.character = chars.join(',');
       if (brands.length) p.brand = brands.join(',');
       if (genders.length) p.gender = genders.join(',');
@@ -142,7 +146,7 @@ export default function ShopPage() {
   React.useEffect(() => {
     const sp = new URLSearchParams();
     if (cats.length) sp.set('cat', cats.join(','));
-    if (occ.length) sp.set('date_night', '1');
+    if (occ.length) sp.set('day_night', occ.join(','));
     if (concs.length) sp.set('tier', concs.join(','));
     if (types.length) sp.set('tipe', types.join(','));
     if (chars.length) sp.set('character', chars.join(','));
@@ -204,7 +208,7 @@ export default function ShopPage() {
 
   // Label facet aktif (occasion/character) untuk baris hitungan hasil.
   const activeFacetLabel = [
-    ...(occ.length ? ['Day & Night'] : []),
+    ...occ.map((s) => DAY_NIGHT_LABEL[s]),
     ...brands,
     ...chars.map((s) => nameOf(characters, s)),
   ]
@@ -215,7 +219,7 @@ export default function ShopPage() {
   const activeChips = [
     ...(searchQ ? [{ k: 'q', label: `“${searchQ}”`, remove: () => setSearchQ('') }] : []),
     ...cats.map((s) => ({ k: `cat-${s}`, label: nameOf(categories, s), remove: () => toggleValue(cats, setCats, s) })),
-    ...occ.map((s) => ({ k: `occasion-${s}`, label: 'Day & Night', remove: () => toggleValue(occ, setOcc, s) })),
+    ...occ.map((s) => ({ k: `occasion-${s}`, label: DAY_NIGHT_LABEL[s], remove: () => toggleValue(occ, setOcc, s) })),
     ...brands.map((s) => ({ k: `brand-${s}`, label: s, remove: () => toggleValue(brands, setBrands, s) })),
     ...chars.map((s) => ({ k: `character-${s}`, label: nameOf(characters, s), remove: () => toggleValue(chars, setChars, s) })),
     ...concs.map((s) => ({ k: `tier-${s}`, label: s, remove: () => toggleValue(concs, setConcs, s) })),
@@ -437,7 +441,7 @@ export default function ShopPage() {
           <SheetHeader className="px-5 py-3.5 border-b border-black/10">
             <SheetTitle className="cp-mono uppercase text-[11px] tracking-[0.22em]">Filter</SheetTitle>
             <SheetDescription className="text-xs text-black/60">
-              Saring katalog berdasarkan kategori, brand, karakter aroma, Day & Night, tier, dan tipe.
+              Saring katalog berdasarkan kategori, brand, karakter aroma, Day / Night, tier, dan tipe.
             </SheetDescription>
           </SheetHeader>
           <div className="px-5 py-4 overflow-y-auto h-[calc(86vh-64px)]">

@@ -30,7 +30,7 @@ E-commerce **Collector Parfum**: distributor parfum refill di Bandung sejak **19
 ## Deploy ke VPS (sekali jadi)
 
 ```bash
-wget -O deploy.sh https://raw.githubusercontent.com/pandekomangyogaswastika-dot/cpweb/main/deploy.sh
+wget -O deploy.sh https://raw.githubusercontent.com/pandeyoga/cpweb/main/deploy.sh
 sudo bash deploy.sh
 ```
 
